@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "provision:dev-test-users": "node --env-file=.env.development.local scripts/provision-dev-test-users.mjs",
+    "verify:dev-driver-rls": "node --env-file=.env.development.local scripts/verify-dev-driver-rls.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.6",

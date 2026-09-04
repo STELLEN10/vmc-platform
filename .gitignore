@@ -33,6 +33,7 @@ yarn-error.log*
 # Local environment files. Keep credentials out of Git; commit .env.example only.
 .env*
 !.env.example
+!.env.development.example
 
 # vercel
 .vercel

@@ -58,30 +58,16 @@ There is no public registration UI. The login form only uses `signInWithPassword
 | `staff` | `/management` | Operational driver/bike access; no admin privilege management |
 | `driver` | `/driver` | Own profile, own driver record and assigned bike only |
 
-Each Auth user receives a profile through a database trigger. The trigger always creates the initial profile as `driver`; it never reads a client-provided `role` value from user metadata. There are no test users seeded in migrations because credentials and real data must never be committed.
+Each Auth user receives a profile through a database trigger. The trigger always creates the initial profile as `driver`; it never reads a client-provided `role` value from user metadata. There are no test users seeded in database migrations because credentials and real data must never be committed.
 
-For this foundation, create accounts through Supabase Auth only (dashboard/administrative workflow) and assign privileged roles in a trusted, server-side or SQL-editor workflow. For example, after confirming the correct Auth user:
-
-```sql
--- Trusted administrator-only provisioning step; do not expose through the browser.
-update public.profiles
-set role = 'admin'
-where email = 'test.admin@example.com';
-
--- Create the associated staff row for a Test Staff account where appropriate.
-insert into public.staff_profiles (profile_id)
-select id from public.profiles
-where email = 'test.staff@example.com'
-on conflict (profile_id) do nothing;
-```
-
-Use names such as **Test Admin**, **Test Staff**, **Test Driver** and **Test HERO Bike** for any development data. Do not insert real VMC driver data into development, migrations or source code.
+For local development, use the guarded server-side provisioning workflow in [docs/development-test-accounts.md](docs/development-test-accounts.md). It creates clearly labelled Test Admin, Test Staff, Test Driver and Test HERO Bike records only after an explicit development opt-in. Do not insert real VMC driver data into development, migrations or source code.
 
 ## Role test checklist
 
-1. Create a `Test Admin` Auth user, promote it in the SQL Editor, sign in, and confirm `/management` works.
-2. Create a `Test Staff` Auth user, set the role to `staff`, add a `staff_profiles` row, sign in, and confirm `/management` works.
-3. Create a `Test Driver` Auth user (the trigger defaults it to `driver`), add its `drivers` record and optionally assign a `Test HERO Bike`. Confirm `/driver`, `/driver/profile` and `/driver/bike` work.
+1. Follow the [development test account guide](docs/development-test-accounts.md) to provision the three accounts server-side.
+2. Sign in as `Test Admin` and confirm `/management` works.
+3. Sign in as `Test Staff` and confirm `/management` works.
+4. Sign in as `Test Driver` and confirm `/driver`, `/driver/profile` and `/driver/bike` work.
 4. While signed in as the test driver, manually open `/management`. The server layout redirects to `/access-denied`; hiding navigation is not relied upon.
 5. While signed in as a management user, open `/driver`. The server layout redirects to `/access-denied`.
 6. In Supabase's RLS testing tools or with JWTs for the respective users, verify that a driver cannot select another `profiles`, `drivers`, `bikes` or any `staff_profiles` row.
