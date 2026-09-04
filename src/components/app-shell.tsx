@@ -18,12 +18,16 @@ type AppShellProps = {
 };
 
 export function AppShell({ children, area, navigation, profile }: AppShellProps) {
+  const experience = area === "VMC Driver" ? "driver" : "management";
+
   return (
-    <div className="app-shell">
+    <div className={`app-shell app-shell--${experience}`}>
       <aside className="app-sidebar">
         <div>
           <BrandMark href={area === "VMC Driver" ? "/driver" : "/management"} />
-          <p className="app-area">{area}</p>
+          <p className="app-area">
+            {experience === "driver" ? "HERO RIDER APP" : "VMC OPERATIONS"}
+          </p>
           <nav className="app-navigation" aria-label={`${area} navigation`}>
             {navigation.map((item) => (
               <Link key={item.href} href={item.href}>
@@ -40,7 +44,7 @@ export function AppShell({ children, area, navigation, profile }: AppShellProps)
       </aside>
       <header className="mobile-app-header">
         <BrandMark compact href={area === "VMC Driver" ? "/driver" : "/management"} />
-        <span>{area}</span>
+        <span>{experience === "driver" ? "VMC Driver" : "VMC Management"}</span>
         <SignOutButton />
       </header>
       <main className="app-main">{children}</main>
