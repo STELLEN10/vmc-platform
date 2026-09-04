@@ -8,6 +8,7 @@ export type AuthenticatedProfile = {
   id: string;
   fullName: string;
   email: string | null;
+  phone: string | null;
   role: AppRole;
 };
 
@@ -15,7 +16,7 @@ async function getProfileForUser(userId: string): Promise<AuthenticatedProfile |
   const supabase = await createClient();
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("id, full_name, email, role")
+    .select("id, full_name, email, phone, role")
     .eq("id", userId)
     .maybeSingle();
 
@@ -27,6 +28,7 @@ async function getProfileForUser(userId: string): Promise<AuthenticatedProfile |
     id: profile.id,
     fullName: profile.full_name,
     email: profile.email,
+    phone: profile.phone,
     role: profile.role,
   };
 }

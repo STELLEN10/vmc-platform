@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import { createClient } from "@/lib/supabase/client";
 
@@ -37,7 +38,8 @@ export function LoginForm() {
       <label>Password<input name="password" type="password" autoComplete="current-password" required /></label>
       {message && <p className="form-message form-message--error" role="alert">{message}</p>}
       <button className="button button--primary" type="submit" disabled={isSubmitting}>{isSubmitting ? "Signing in…" : "Sign in securely"}</button>
-      <p className="form-note">Accounts are created by authorized VMC administrators. Public registration is not available.</p>
+      <Link className="text-action" href="/forgot-password">Forgot password?</Link>
+      <p className="form-note">New delivery riders can <Link href="/driver/register">create a VMC Driver account</Link>. Staff and admin accounts remain controlled by VMC.</p>
     </form>
   );
 }

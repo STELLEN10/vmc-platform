@@ -1,6 +1,16 @@
 export type AppRole = "admin" | "staff" | "driver";
 export type DriverStatus = "active" | "inactive" | "suspended";
 export type BikeStatus = "available" | "assigned" | "maintenance" | "inactive";
+export type DriverOnboardingStatus =
+  | "pending"
+  | "incomplete"
+  | "submitted"
+  | "under_review"
+  | "approved"
+  | "active"
+  | "changes_requested"
+  | "rejected"
+  | "suspended";
 
 export type Database = {
   public: {
@@ -120,6 +130,58 @@ export type Database = {
         };
         Relationships: [];
       };
+      driver_onboardings: {
+        Row: {
+          profile_id: string;
+          emergency_contact_name: string | null;
+          emergency_contact_phone: string | null;
+          residential_address: string | null;
+          delivery_platforms: string[];
+          onboarding_status: DriverOnboardingStatus;
+          submitted_at: string | null;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          review_note: string | null;
+          contract_start_date: string | null;
+          usual_payment_day: number | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          profile_id: string;
+          emergency_contact_name?: string | null;
+          emergency_contact_phone?: string | null;
+          residential_address?: string | null;
+          delivery_platforms?: string[];
+          onboarding_status?: DriverOnboardingStatus;
+        };
+        Update: {
+          emergency_contact_name?: string | null;
+          emergency_contact_phone?: string | null;
+          residential_address?: string | null;
+          delivery_platforms?: string[];
+          onboarding_status?: DriverOnboardingStatus;
+          review_note?: string | null;
+          contract_start_date?: string | null;
+          usual_payment_day?: number | null;
+        };
+        Relationships: [];
+      };
+      management_notifications: {
+        Row: {
+          id: string;
+          type: "driver_onboarding_submitted";
+          driver_profile_id: string;
+          title: string;
+          body: string;
+          created_at: string;
+          read_at: string | null;
+          read_by: string | null;
+        };
+        Insert: never;
+        Update: { read_at?: string | null; read_by?: string | null };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -131,6 +193,7 @@ export type Database = {
       app_role: AppRole;
       bike_status: BikeStatus;
       driver_status: DriverStatus;
+      driver_onboarding_status: DriverOnboardingStatus;
     };
     CompositeTypes: Record<string, never>;
   };

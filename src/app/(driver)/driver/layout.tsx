@@ -8,6 +8,7 @@ const driverNavigation = [
   { href: "/driver", label: "Overview" },
   { href: "/driver/profile", label: "My profile" },
   { href: "/driver/bike", label: "My motorcycle" },
+  { href: "/driver/onboarding", label: "My onboarding" },
 ] as const;
 
 export default async function DriverLayout({ children }: { children: ReactNode }) {

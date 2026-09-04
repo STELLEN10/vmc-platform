@@ -64,6 +64,10 @@ Each Auth user receives a profile through a database trigger. The trigger always
 
 For local development, use the guarded server-side provisioning workflow in [docs/development-test-accounts.md](docs/development-test-accounts.md). It creates clearly labelled Test Admin, Test Staff, Test Driver and Test HERO Bike records only after an explicit development opt-in. Do not insert real VMC driver data into development, migrations or source code.
 
+## Driver registration and onboarding
+
+VMC Driver has a permanent public registration route at `/driver/register`. It creates only driver accounts through Supabase Auth; roles are assigned by the database, not by the browser. Drivers complete their own personal and delivery information, submit for VMC review, and staff/admin approve or request changes from Management. See [docs/driver-registration-and-review.md](docs/driver-registration-and-review.md) for required Auth setup and the full test flow.
+
 ## Role test checklist
 
 1. Follow the [development test account guide](docs/development-test-accounts.md) to provision the three accounts server-side.
