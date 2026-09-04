@@ -48,6 +48,8 @@ Validate the code before deployment with:
 npm run build
 ```
 
+For remote Preview and Production deployment, environment configuration, and Supabase Auth URL settings, see [docs/vercel-deployment.md](docs/vercel-deployment.md).
+
 ## Authentication and roles
 
 There is no public registration UI. The login form only uses `signInWithPassword`; role routing happens on the server after the session is verified:
