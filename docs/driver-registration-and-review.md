@@ -16,7 +16,9 @@ Admin and staff accounts cannot be created through this route.
 
    ```text
    http://localhost:3000/auth/callback?next=/driver/onboarding
+   http://localhost:3000/auth/callback?next=/reset-password
    https://your-production-domain/auth/callback?next=/driver/onboarding
+   https://your-production-domain/auth/callback?next=/reset-password
    ```
 
    Configure the matching Preview URL patterns separately as documented in `docs/vercel-deployment.md`.
@@ -37,7 +39,7 @@ Admin and staff accounts cannot be created through this route.
 
 - Submit a crafted browser request with `role=admin` or `role=staff`: it cannot change the database role because the Auth trigger always assigns `driver`, and profile RLS rejects role changes.
 - As a driver, open `/management`: the server layout redirects to `/access-denied`.
-- Run `npm run verify:dev-driver-rls` after provisioning test fixtures. It confirms the signed-in driver sees only their own profile, driver record and assigned bike, and no staff profiles.
+- Run `npm run verify:dev-driver-rls` after provisioning test fixtures. It confirms the signed-in driver sees only their own profile, driver record, onboarding record and assigned bike, and no staff profiles.
 - Enable `VMC_INCLUDE_SECOND_TEST_DRIVER=true` in the local development file, provision again, and rerun the verifier to confirm another driver's records are not enumerable.
 - The browser only receives `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. No secret/service key is used by registration or onboarding.
 

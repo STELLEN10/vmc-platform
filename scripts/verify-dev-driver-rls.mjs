@@ -59,14 +59,15 @@ async function main() {
     fail(`could not sign in as Test Driver: ${signInError?.message ?? "unknown error"}`);
   }
 
-  const [profilesResult, driversResult, bikesResult, staffProfilesResult] = await Promise.all([
+  const [profilesResult, driversResult, bikesResult, onboardingsResult, staffProfilesResult] = await Promise.all([
     client.from("profiles").select("id, role"),
     client.from("drivers").select("profile_id, bike_id"),
     client.from("bikes").select("id"),
+    client.from("driver_onboardings").select("profile_id, onboarding_status"),
     client.from("staff_profiles").select("id"),
   ]);
 
-  for (const result of [profilesResult, driversResult, bikesResult, staffProfilesResult]) {
+  for (const result of [profilesResult, driversResult, bikesResult, onboardingsResult, staffProfilesResult]) {
     if (result.error) {
       fail(`database query failed: ${result.error.message}`);
     }
@@ -86,10 +87,14 @@ async function main() {
     bikesResult.data.length === 1 && bikesResult.data[0].id === driversResult.data[0].bike_id,
     "Test Driver could read a bike other than their assigned bike or could not read it.",
   );
+  assertResult(
+    onboardingsResult.data.length === 1 && onboardingsResult.data[0].profile_id === signInData.user.id,
+    "Test Driver could read another driver's onboarding record or could not read their own record.",
+  );
   assertResult(staffProfilesResult.data.length === 0, "Test Driver could read staff profiles.");
 
   await client.auth.signOut();
-  console.log("PASS: Test Driver can read only their own profile, driver record and assigned bike; staff profiles remain hidden.");
+  console.log("PASS: Test Driver can read only their own profile, driver record, onboarding record and assigned bike; staff profiles remain hidden.");
 }
 
 main().catch((error) => {
