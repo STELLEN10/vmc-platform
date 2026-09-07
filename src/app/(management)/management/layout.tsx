@@ -9,13 +9,17 @@ const managementNavigation = [
   { href: "/management/drivers", label: "Drivers" },
   { href: "/management/bikes", label: "Bikes" },
   { href: "/management/releases", label: "Release control" },
+  { href: "/management/team", label: "Team access" },
 ] as const;
 
 export default async function ManagementLayout({ children }: { children: ReactNode }) {
   const profile = await requireRole(MANAGEMENT_ROLES);
+  const navigation = profile.role === "admin"
+    ? managementNavigation
+    : managementNavigation.filter((item) => item.href !== "/management/team");
 
   return (
-    <AppShell area="VMC Management" navigation={managementNavigation} profile={profile}>
+    <AppShell area="VMC Management" navigation={navigation} profile={profile}>
       {children}
     </AppShell>
   );

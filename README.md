@@ -68,6 +68,10 @@ For local development, use the guarded server-side provisioning workflow in [doc
 
 VMC Driver has a permanent public registration route at `/driver/register`. It creates only driver accounts through Supabase Auth; roles are assigned by the database, not by the browser. Drivers complete their own personal and delivery information, submit for VMC review, and staff/admin approve or request changes from Management. See [docs/driver-registration-and-review.md](docs/driver-registration-and-review.md) for required Auth setup and the full test flow.
 
+## Management account provisioning
+
+There is no public staff or admin registration route. Create the initial administrator through the guarded server-side bootstrap process, then use **Management → Team access** to invite staff. Invitees choose their own passwords through Supabase Auth. See [docs/admin-bootstrap-and-staff-invitations.md](docs/admin-bootstrap-and-staff-invitations.md).
+
 ## Role test checklist
 
 1. Follow the [development test account guide](docs/development-test-accounts.md) to provision the three accounts server-side.

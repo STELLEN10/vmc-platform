@@ -13,13 +13,12 @@ Add these variables in **Vercel → Project → Settings → Environment Variabl
 
 The `NEXT_PUBLIC_` prefix is intentional: these values are used by the browser Supabase client. Database access remains protected by Supabase Auth and RLS.
 
-Do **not** configure any of these in Vercel:
+Do **not** configure development-only values in Vercel:
 
-- `SUPABASE_SECRET_KEY` or legacy `SUPABASE_SERVICE_ROLE_KEY`
 - `VMC_DEV_TEST_MODE`, `VMC_ALLOW_REMOTE_DEVELOPMENT_SUPABASE`, or `VMC_TEST_*`
 - `.env.development.local` values
 
-Those values belong only to the local, guarded development provisioning scripts and must never be available to a deployment.
+`SUPABASE_SECRET_KEY` is required only when server-side staff invitations are enabled. It must remain an unprefixed Vercel server secret and must never be imported into browser code. See `docs/admin-bootstrap-and-staff-invitations.md`.
 
 ## Deploy from GitHub
 
@@ -60,9 +59,9 @@ In each Supabase project, open **Authentication → URL Configuration**.
 - Add `http://localhost:3000/**` for local development.
 - For Preview, add the narrow Vercel preview pattern for your Vercel account/team, such as `https://*-your-team-slug.vercel.app/**`.
 - Add the exact production domain separately.
-- Permit the registration and password-reset callback URLs documented in `docs/driver-registration-and-review.md` for each environment.
+- Permit the registration and password-reset callback URLs documented in `docs/driver-registration-and-review.md`, plus `/auth/callback?next=/set-password` for staff invitations.
 
-These settings allow Supabase email confirmation and password-reset links to return safely through the server-side Auth callback.
+These settings allow Supabase email confirmation, password-reset and staff-invitation links to return safely through the server-side Auth callback.
 
 ## Remote test checklist
 
