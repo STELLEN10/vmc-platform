@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 type BrandMarkProps = {
@@ -8,13 +9,14 @@ type BrandMarkProps = {
 export function BrandMark({ compact = false, href = "/" }: BrandMarkProps) {
   return (
     <Link href={href} className="brand-mark" aria-label="Valhalla Motorcycles home">
-      <span className="brand-mark__crest" aria-hidden="true">V</span>
-      {!compact && (
-        <span className="brand-mark__wording">
-          <span>VALHALLA</span>
-          <small>MOTORCYCLES</small>
-        </span>
-      )}
+      <Image
+        alt="Valhalla Motorcycles"
+        className={compact ? "brand-mark__logo brand-mark__logo--compact" : "brand-mark__logo"}
+        height={400}
+        priority
+        src="/vmc-logo.png"
+        width={500}
+      />
     </Link>
   );
 }

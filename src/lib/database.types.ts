@@ -11,6 +11,8 @@ export type DriverOnboardingStatus =
   | "changes_requested"
   | "rejected"
   | "suspended";
+export type ReleaseChannel = "stable" | "beta";
+export type ReleaseStatus = "draft" | "testing" | "active" | "paused" | "rolled_back" | "retired";
 
 export type Database = {
   public: {
@@ -182,6 +184,41 @@ export type Database = {
         Update: { read_at?: string | null; read_by?: string | null };
         Relationships: [];
       };
+      releases: {
+        Row: {
+          id: string;
+          version: string;
+          channel: ReleaseChannel;
+          status: ReleaseStatus;
+          release_notes: string | null;
+          created_by: string | null;
+          activated_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          version: string;
+          channel?: ReleaseChannel;
+          status?: ReleaseStatus;
+          release_notes?: string | null;
+        };
+        Update: { status?: ReleaseStatus; release_notes?: string | null };
+        Relationships: [];
+      };
+      feature_flags: {
+        Row: {
+          id: string;
+          key: string;
+          description: string | null;
+          enabled: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: { id?: string; key: string; description?: string | null; enabled?: boolean };
+        Update: { description?: string | null; enabled?: boolean };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -192,12 +229,26 @@ export type Database = {
         Args: { p_profile_id: string; p_status: DriverOnboardingStatus; p_review_note?: string | null };
         Returns: undefined;
       };
+      create_release: {
+        Args: { p_version: string; p_channel: ReleaseChannel; p_release_notes?: string | null };
+        Returns: string;
+      };
+      transition_release: {
+        Args: { p_release_id: string; p_status: ReleaseStatus; p_note?: string | null };
+        Returns: undefined;
+      };
+      set_feature_flag: {
+        Args: { p_key: string; p_enabled: boolean; p_description?: string | null };
+        Returns: undefined;
+      };
     };
     Enums: {
       app_role: AppRole;
       bike_status: BikeStatus;
       driver_status: DriverStatus;
       driver_onboarding_status: DriverOnboardingStatus;
+      release_channel: ReleaseChannel;
+      release_status: ReleaseStatus;
     };
     CompositeTypes: Record<string, never>;
   };

@@ -1,6 +1,7 @@
 import type { AppRole } from "@/lib/database.types";
 
 export const MANAGEMENT_ROLES = ["admin", "staff"] as const;
+export const ADMIN_ROLES = ["admin"] as const;
 export const DRIVER_ROLES = ["driver"] as const;
 
 export function isAppRole(value: unknown): value is AppRole {
