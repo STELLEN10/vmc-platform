@@ -219,6 +219,31 @@ export type Database = {
         Update: { description?: string | null; enabled?: boolean };
         Relationships: [];
       };
+      audit_logs: {
+        Row: {
+          id: string;
+          actor_id: string | null;
+          action: string;
+          entity_type: string;
+          entity_id: string | null;
+          old_values: Record<string, unknown> | null;
+          new_values: Record<string, unknown> | null;
+          metadata: Record<string, unknown>;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          actor_id?: string | null;
+          action: string;
+          entity_type: string;
+          entity_id?: string | null;
+          old_values?: Record<string, unknown> | null;
+          new_values?: Record<string, unknown> | null;
+          metadata?: Record<string, unknown>;
+        };
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
