@@ -1,6 +1,3 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="16" fill="#071b36"/>
-  <path d="M13 15h10l9 25 9-25h10L36 51h-8L13 15Z" fill="#57b9ec"/>
-  <path d="M18 15h7l7 20-4 11L18 15Z" fill="#fff" opacity=".9"/>
-  <path d="M42 15h7L36 51h-7l4-11 9-25Z" fill="#db1e2a"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400">
+  <image href="/vmc-logo.png" width="500" height="400" preserveAspectRatio="xMidYMid meet"/>
 </svg>
