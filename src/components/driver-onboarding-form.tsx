@@ -46,20 +46,31 @@ export function DriverOnboardingForm({ profile, onboarding, hasAssignedBike }: P
   const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState<DriverOnboardingStatus>(onboarding?.onboarding_status ?? "pending");
   const [platformValues, setPlatformValues] = useState<string[]>(onboarding?.delivery_platforms ?? []);
+  const [completionFields, setCompletionFields] = useState({
+    fullName: profile.fullName,
+    phone: profile.phone ?? "",
+    emergencyName: onboarding?.emergency_contact_name ?? "",
+    emergencyPhone: onboarding?.emergency_contact_phone ?? "",
+    address: onboarding?.residential_address ?? "",
+  });
   const lockedForReview = ["submitted", "under_review", "approved", "active", "rejected", "suspended"].includes(status);
   const canEdit = !lockedForReview || status === "changes_requested";
 
   const completion = useMemo(() => {
     const completed = [
-      Boolean(profile.fullName),
-      Boolean(profile.phone),
-      Boolean(onboarding?.emergency_contact_name),
-      Boolean(onboarding?.emergency_contact_phone),
-      Boolean(onboarding?.residential_address),
+      Boolean(completionFields.fullName.trim()),
+      Boolean(completionFields.phone.trim()),
+      Boolean(completionFields.emergencyName.trim()),
+      Boolean(completionFields.emergencyPhone.trim()),
+      Boolean(completionFields.address.trim()),
       platformValues.length > 0,
     ].filter(Boolean).length;
     return Math.round((completed / 6) * 100);
-  }, [onboarding, platformValues, profile.fullName, profile.phone]);
+  }, [completionFields, platformValues]);
+
+  function updateCompletionField(field: keyof typeof completionFields, value: string) {
+    setCompletionFields((current) => ({ ...current, [field]: value }));
+  }
 
   function togglePlatform(value: string) {
     setPlatformValues((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
@@ -125,12 +136,12 @@ export function DriverOnboardingForm({ profile, onboarding, hasAssignedBike }: P
         <fieldset disabled={!canEdit || isSaving}>
           <div className="form-section-heading"><p className="card-label">PERSONAL INFORMATION</p><span>Driver editable</span></div>
           <div className="form-grid">
-            <label>Full name<input name="fullName" defaultValue={profile.fullName} required /></label>
+            <label>Full name<input name="fullName" value={completionFields.fullName} onChange={(event) => updateCompletionField("fullName", event.target.value)} required /></label>
             <label>Email address<input value={profile.email ?? ""} disabled /></label>
-            <label>Phone number<input name="phone" type="tel" defaultValue={profile.phone ?? ""} required /></label>
-            <label>Emergency contact name<input name="emergencyName" defaultValue={onboarding?.emergency_contact_name ?? ""} required /></label>
-            <label>Emergency contact phone<input name="emergencyPhone" type="tel" defaultValue={onboarding?.emergency_contact_phone ?? ""} required /></label>
-            <label className="form-grid__wide">Residential address<textarea name="address" defaultValue={onboarding?.residential_address ?? ""} required /></label>
+            <label>Phone number<input name="phone" type="tel" value={completionFields.phone} onChange={(event) => updateCompletionField("phone", event.target.value)} required /></label>
+            <label>Emergency contact name<input name="emergencyName" value={completionFields.emergencyName} onChange={(event) => updateCompletionField("emergencyName", event.target.value)} required /></label>
+            <label>Emergency contact phone<input name="emergencyPhone" type="tel" value={completionFields.emergencyPhone} onChange={(event) => updateCompletionField("emergencyPhone", event.target.value)} required /></label>
+            <label className="form-grid__wide">Residential address<textarea name="address" value={completionFields.address} onChange={(event) => updateCompletionField("address", event.target.value)} required /></label>
           </div>
           <div className="form-section-heading"><p className="card-label">DELIVERY INFORMATION</p><span>Driver editable</span></div>
           <div className="platform-list">{platforms.map(([value, label]) => <label key={value}><input type="checkbox" checked={platformValues.includes(value)} onChange={() => togglePlatform(value)} />{label}</label>)}</div>

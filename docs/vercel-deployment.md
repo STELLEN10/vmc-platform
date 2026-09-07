@@ -60,8 +60,9 @@ In each Supabase project, open **Authentication → URL Configuration**.
 - Add `http://localhost:3000/**` for local development.
 - For Preview, add the narrow Vercel preview pattern for your Vercel account/team, such as `https://*-your-team-slug.vercel.app/**`.
 - Add the exact production domain separately.
+- Permit the registration and password-reset callback URLs documented in `docs/driver-registration-and-review.md` for each environment.
 
-The current password login flow does not use an external redirect, but these settings are required before adding password resets, magic links, invitations, or OAuth in a later phase.
+These settings allow Supabase email confirmation and password-reset links to return safely through the server-side Auth callback.
 
 ## Remote test checklist
 
