@@ -111,7 +111,7 @@ end;
 $$;
 
 create trigger driver_onboardings_enforce_submission
-  before update on public.driver_onboardings
+  before insert or update on public.driver_onboardings
   for each row execute procedure public.enforce_driver_onboarding_submission();
 
 -- Internal database notification created only for a genuine transition to
@@ -148,11 +148,76 @@ revoke all on function public.initialize_driver_onboarding() from public;
 revoke all on function public.enforce_driver_onboarding_submission() from public;
 revoke all on function public.notify_management_of_driver_submission() from public;
 
+-- The current onboarding state is database-owned. A driver may edit only while
+-- their existing record is pending, incomplete, or returned for changes.
+create or replace function public.driver_can_edit_onboarding(p_profile_id uuid)
+returns boolean
+language sql
+stable
+security definer set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.driver_onboardings
+    where profile_id = p_profile_id
+      and profile_id = (select auth.uid())
+      and onboarding_status in ('pending', 'incomplete', 'changes_requested')
+  )
+$$;
+
+revoke all on function public.driver_can_edit_onboarding(uuid) from public;
+grant execute on function public.driver_can_edit_onboarding(uuid) to authenticated;
+
+-- Review data is VMC-managed. This narrowly scoped function is the only path
+-- for management to update it; it checks the caller's database role itself.
+create or replace function public.review_driver_onboarding(
+  p_profile_id uuid,
+  p_status public.driver_onboarding_status,
+  p_review_note text default null
+)
+returns void
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  if not public.is_management() then
+    raise exception 'Only VMC management can review driver onboarding';
+  end if;
+
+  if p_status not in ('under_review', 'approved', 'active', 'changes_requested', 'rejected', 'suspended') then
+    raise exception 'Invalid management onboarding status';
+  end if;
+
+  update public.driver_onboardings
+  set onboarding_status = p_status,
+      review_note = nullif(trim(p_review_note), '')
+  where profile_id = p_profile_id;
+
+  if not found then
+    raise exception 'Driver onboarding record not found';
+  end if;
+end;
+$$;
+
+revoke all on function public.review_driver_onboarding(uuid, public.driver_onboarding_status, text) from public;
+grant execute on function public.review_driver_onboarding(uuid, public.driver_onboarding_status, text) to authenticated;
+
 alter table public.driver_onboardings enable row level security;
 alter table public.management_notifications enable row level security;
 
 revoke all on public.driver_onboardings, public.management_notifications from anon;
 grant select, insert, update, delete on public.driver_onboardings, public.management_notifications to authenticated;
+
+-- RLS controls rows; column privileges make the driver/VMC ownership boundary
+-- explicit even for deliberately crafted Data API update payloads.
+revoke update on public.driver_onboardings from authenticated;
+grant update (
+  emergency_contact_name,
+  emergency_contact_phone,
+  residential_address,
+  delivery_platforms,
+  onboarding_status
+) on public.driver_onboardings to authenticated;
 
 -- A driver can only read/edit their own application. The check excludes all
 -- management-only status values, contract fields and reviewer columns.
@@ -174,7 +239,7 @@ create policy "driver_onboardings_insert_own"
 
 create policy "driver_onboardings_update_own"
   on public.driver_onboardings for update to authenticated
-  using (profile_id = (select auth.uid()))
+  using (public.driver_can_edit_onboarding(profile_id))
   with check (
     profile_id = (select auth.uid())
     and onboarding_status in ('pending', 'incomplete', 'submitted')
@@ -184,11 +249,6 @@ create policy "driver_onboardings_update_own"
     and contract_start_date is null
     and usual_payment_day is null
   );
-
-create policy "driver_onboardings_management_write"
-  on public.driver_onboardings for all to authenticated
-  using (public.is_management())
-  with check (public.is_management());
 
 create policy "management_notifications_management_access"
   on public.management_notifications for all to authenticated

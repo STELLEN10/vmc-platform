@@ -22,10 +22,11 @@ export async function reviewDriverOnboarding(formData: FormData) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("driver_onboardings")
-    .update({ onboarding_status: status, review_note: reviewNote })
-    .eq("profile_id", profileId);
+  const { error } = await supabase.rpc("review_driver_onboarding", {
+    p_profile_id: profileId,
+    p_status: status,
+    p_review_note: reviewNote,
+  });
 
   if (error) {
     throw new Error("Could not update the driver review status.");

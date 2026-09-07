@@ -188,6 +188,10 @@ export type Database = {
       current_app_role: { Args: Record<string, never>; Returns: AppRole | null };
       is_admin: { Args: Record<string, never>; Returns: boolean };
       is_management: { Args: Record<string, never>; Returns: boolean };
+      review_driver_onboarding: {
+        Args: { p_profile_id: string; p_status: DriverOnboardingStatus; p_review_note?: string | null };
+        Returns: undefined;
+      };
     };
     Enums: {
       app_role: AppRole;
