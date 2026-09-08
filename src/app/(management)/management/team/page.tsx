@@ -15,7 +15,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
     .order("created_at");
 
   return <>
-    <PageHeading eyebrow="VMC MANAGEMENT · ADMIN" title="Team access" description="Invite VMC staff securely. Invitees choose their own password; VMC never sees or stores it." />
+    <PageHeading eyebrow="VMC MANAGEMENT · ADMIN" title="Team access" description="Invite VMC staff securely. The email link opens a password-setup page; VMC never sees or stores their password." />
     {invited === "1" && <p className="form-message form-message--success">Invitation sent. The staff member must use the emailed link to set a password.</p>}
     {error && <p className="form-message form-message--error">The invitation could not be sent. Check the details and server invitation configuration.</p>}
     <section className="review-grid">
@@ -25,7 +25,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
         <label>Email address<input name="email" type="email" required autoComplete="email" /></label>
         <button className="button button--primary" type="submit">Send staff invitation</button>
       </form>
-      <section className="panel"><p className="card-label">SECURITY MODEL</p><h2>Controlled staff provisioning</h2><p className="card-copy">Only an authenticated admin can invite staff. A public registration page cannot create staff or admin roles.</p></section>
+      <section className="panel"><p className="card-label">WHAT THE STAFF MEMBER DOES</p><h2>Set a personal password</h2><p className="card-copy">They open the VMC invitation email, select the secure link, create a password of at least 12 characters, then sign in at the VMC login page.</p></section>
     </section>
     <section className="panel table-panel"><div className="data-table" role="table" aria-label="VMC team members"><div className="data-table__row data-table__head" role="row"><span role="columnheader">Member</span><span role="columnheader">Email</span><span role="columnheader">Role</span><span role="columnheader">Created</span></div>{staff?.map((member) => <div className="data-table__row" role="row" key={member.id}><span role="cell">{member.full_name || "VMC team member"}</span><span role="cell">{member.email ?? "Not recorded"}</span><span role="cell"><StatusBadge tone={member.role === "admin" ? "blue" : "green"}>{member.role}</StatusBadge></span><span role="cell">{new Date(member.created_at).toLocaleDateString("en-ZA")}</span></div>)}</div></section>
   </>;
