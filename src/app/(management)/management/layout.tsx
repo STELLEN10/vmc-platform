@@ -10,6 +10,7 @@ const managementNavigation = [
   { href: "/management/bikes", label: "Bikes" },
   { href: "/management/releases", label: "Release control" },
   { href: "/management/team", label: "Team access" },
+  { href: "/management/settings", label: "Settings" },
 ] as const;
 
 export default async function ManagementLayout({ children }: { children: ReactNode }) {
