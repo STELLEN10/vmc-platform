@@ -38,8 +38,11 @@ export function LoginForm() {
       <label>Password<input name="password" type="password" autoComplete="current-password" required /></label>
       {message && <p className="form-message form-message--error" role="alert">{message}</p>}
       <button className="button button--primary" type="submit" disabled={isSubmitting}>{isSubmitting ? "Signing in…" : "Sign in securely"}</button>
-      <Link className="text-action" href="/forgot-password">Forgot password?</Link>
-      <p className="form-note">New delivery riders can <Link href="/driver/register">create a VMC Driver account</Link>. Staff and admin accounts remain controlled by VMC.</p>
+      <div className="login-links">
+        <Link className="text-action" href="/forgot-password">Forgot password?</Link>
+        <Link className="text-action" href="/driver/register">Create driver account</Link>
+      </div>
+      <p className="form-note">New delivery riders can register here. Staff and administrator accounts are created only from a secure VMC invitation.</p>
     </form>
   );
 }

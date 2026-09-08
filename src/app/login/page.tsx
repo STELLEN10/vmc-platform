@@ -1,10 +1,10 @@
 import { BrandMark } from "@/components/brand-mark";
 import { LoginForm } from "@/components/login-form";
 
-type LoginPageProps = { searchParams: Promise<{ error?: string }> };
+type LoginPageProps = { searchParams: Promise<{ error?: string; invited?: string }> };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const { error } = await searchParams;
+  const { error, invited } = await searchParams;
 
   return (
     <main className="auth-page">
@@ -23,6 +23,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <h2>Sign in</h2>
           <p className="page-description">Access is available only to authorized VMC drivers, staff and administrators.</p>
           {error === "auth_callback" && <p className="form-message form-message--error">We could not complete that sign-in. Please try again.</p>}
+          {invited === "1" && <p className="form-message form-message--success">Your account has been created. Sign in with your invited email and new password.</p>}
           <LoginForm />
         </div>
       </section>
