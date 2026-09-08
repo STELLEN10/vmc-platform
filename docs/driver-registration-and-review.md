@@ -17,11 +17,11 @@ Admin and staff accounts cannot be created through this route.
    ```text
    http://localhost:3000/auth/callback?next=/driver/onboarding
    http://localhost:3000/auth/callback?next=/reset-password
-   https://your-production-domain/auth/callback?next=/driver/onboarding
-   https://your-production-domain/auth/callback?next=/reset-password
+   https://vmc-platform.vercel.app/auth/callback?next=/driver/onboarding
+   https://vmc-platform.vercel.app/auth/callback?next=/reset-password
    ```
 
-   Configure the matching Preview URL patterns separately as documented in `docs/vercel-deployment.md`.
+   The current Vercel deployment is the development/testing environment. Do not add a future custom VMC domain until it exists.
 4. For production, keep email confirmation enabled and configure SMTP. After signup, the driver receives a confirmation email, then signs in to continue onboarding. Local Supabase captures messages in Mailpit.
 
 ## New driver test flow
@@ -34,6 +34,8 @@ Admin and staff accounts cannot be created through this route.
 6. Select **Submit for review**. The database validates required fields, changes status to `submitted`, and creates a management notification.
 7. Sign in as Test Admin or Test Staff. Open `/management/drivers`, select the new driver, add an optional review note, then choose **Approve** or **Activate**.
 8. Sign back in as the driver. `/driver/onboarding` shows the current status and review note. The VMC-managed motorcycle/contract area stays read-only.
+
+For remote testing, use `https://vmc-platform.vercel.app/driver/register` and the same flow.
 
 ## Security checks
 

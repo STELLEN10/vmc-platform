@@ -2,7 +2,7 @@
 
 Secure application foundation for Valhalla Motorcycles (VMC), supporting the HERO delivery-rider fleet in the Pretoria–Midrand area.
 
-This phase intentionally provides only the foundation: Supabase authentication, profiles and roles, server-side authorization, RLS, and the initial VMC Driver and VMC Management shells. Payments, maintenance, inventory, applications, tracking, notifications and PWA installation are deliberately out of scope until later phases.
+The foundation now also includes a modular product control plane: protected release versions, server-resolved feature flags, beta assignments, audit events and schema extension points for fleet, payments, maintenance, inventory, notifications, referrals, applications, secure documents and integrations. Future modules are locked by default; deploying code does not enable them.
 
 ## Stack
 
@@ -49,6 +49,8 @@ npm run build
 ```
 
 For remote Preview and Production deployment, environment configuration, and Supabase Auth URL settings, see [docs/vercel-deployment.md](docs/vercel-deployment.md).
+
+For release state, feature flags, beta access and non-destructive rollback, see [docs/modular-release-control.md](docs/modular-release-control.md).
 
 ## Authentication and roles
 

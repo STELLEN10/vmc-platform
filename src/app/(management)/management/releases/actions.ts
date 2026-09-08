@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth/authorization";
 import { ADMIN_ROLES } from "@/lib/auth/roles";
 import type { ReleaseChannel, ReleaseStatus } from "@/lib/database.types";
+import { isFeatureKey } from "@/lib/features/catalog";
 import { createClient } from "@/lib/supabase/server";
 
 const releaseChannels: ReleaseChannel[] = ["stable", "beta"];
@@ -53,7 +54,8 @@ export async function setFeatureFlag(formData: FormData) {
   const enabled = String(formData.get("enabled") ?? "") === "true";
   const description = String(formData.get("description") ?? "").trim() || null;
 
-  if (!/^[a-z][a-z0-9_]{2,80}$/.test(key)) throw new Error("Feature flag keys must use lowercase letters, numbers and underscores.");
+  if (!isFeatureKey(key)) throw new Error("This feature is not part of the VMC release catalogue.");
+  if (key === "core_platform" && !enabled) throw new Error("The VMC core platform cannot be disabled.");
 
   const { error } = await (await createClient()).rpc("set_feature_flag", {
     p_key: key,
@@ -62,5 +64,27 @@ export async function setFeatureFlag(formData: FormData) {
   });
 
   if (error) throw new Error("Could not update the feature flag.");
+  revalidatePath("/management/releases");
+}
+
+export async function assignBetaTester(formData: FormData) {
+  await requireRole(ADMIN_ROLES);
+  const key = String(formData.get("key") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const role = String(formData.get("role") ?? "").trim();
+  if (!isFeatureKey(key) || (!!email === !!role) || (role && !["admin", "staff", "driver"].includes(role))) {
+    throw new Error("Choose a VMC feature and exactly one tester email or role.");
+  }
+  const supabase = await createClient();
+  const profileId = email
+    ? (await supabase.from("profiles").select("id").eq("email", email).maybeSingle()).data?.id ?? null
+    : null;
+  if (email && !profileId) throw new Error("No VMC account exists for that email address.");
+  const { error } = await supabase.rpc("assign_feature_flag_tester", {
+    p_key: key,
+    p_profile_id: profileId,
+    p_role: role ? role as "admin" | "staff" | "driver" : null,
+  });
+  if (error) throw new Error("Could not assign beta access.");
   revalidatePath("/management/releases");
 }

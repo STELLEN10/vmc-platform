@@ -32,7 +32,7 @@ In Vercel, add these **server-side only** variables to Production (and the isola
 
 ```text
 SUPABASE_SECRET_KEY
-VMC_SITE_URL=https://your-production-domain
+VMC_SITE_URL=https://vmc-platform.vercel.app
 ```
 
 `SUPABASE_SECRET_KEY` must never use a `NEXT_PUBLIC_` prefix. It is used only by the server action to call Supabase's Admin invitation API; no browser bundle receives it.
@@ -40,14 +40,14 @@ VMC_SITE_URL=https://your-production-domain
 In Supabase Authentication URL Configuration, allow:
 
 ```text
-https://your-production-domain/auth/callback?next=/set-password
+https://vmc-platform.vercel.app/auth/callback?next=/set-password
 ```
 
 ## 3. Invite staff
 
 1. Sign in as the initial admin.
 2. Open **Management → Team access**.
-3. Enter the staff member's name and email and select **Send staff invitation**.
+3. Enter the team member's name and email, choose Staff or Administrator, then select **Send invitation**.
 4. The recipient opens the email link, chooses their own password, and then signs in at `/login`.
 
 The invitation action is server-side and admin-only. It creates the staff profile and role before the invitee can enter the management area. Staff cannot invite staff, create admins, or change roles.
