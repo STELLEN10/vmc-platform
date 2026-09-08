@@ -266,6 +266,14 @@ export type Database = {
         Args: { p_key: string; p_enabled: boolean; p_description?: string | null };
         Returns: undefined;
       };
+      feature_is_enabled: {
+        Args: { p_key: string; p_environment?: "development" | "preview" | "production" };
+        Returns: boolean;
+      };
+      assign_feature_flag_tester: {
+        Args: { p_key: string; p_profile_id?: string | null; p_role?: AppRole | null };
+        Returns: undefined;
+      };
     };
     Enums: {
       app_role: AppRole;

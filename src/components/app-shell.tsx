@@ -23,8 +23,11 @@ export function AppShell({ children, area, navigation, profile }: AppShellProps)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    setCollapsed(window.localStorage.getItem("vmc-sidebar-collapsed") === "true");
-    setDarkMode(window.localStorage.getItem("vmc-theme") === "dark");
+    const frame = window.requestAnimationFrame(() => {
+      setCollapsed(window.localStorage.getItem("vmc-sidebar-collapsed") === "true");
+      setDarkMode(window.localStorage.getItem("vmc-theme") === "dark");
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   function toggleSidebar() {
