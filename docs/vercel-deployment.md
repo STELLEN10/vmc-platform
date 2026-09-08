@@ -4,12 +4,16 @@ The VMC web application is a standard Next.js App Router project and can be depl
 
 ## Required Vercel environment variables
 
-Add these variables in **Vercel → Project → Settings → Environment Variables** for both **Preview** and **Production**. Use the matching isolated Supabase project for each environment.
+Add these variables in **Vercel → Project → Settings → Environment Variables** for the current temporary **Production** deployment at `https://vmc-platform.vercel.app`. Use matching isolated Supabase projects if Preview is enabled later.
 
 | Variable | Required | Safe in browser | Value source |
 | --- | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Yes | Yes | Supabase project Connect/API settings |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Yes | Yes | Supabase project Connect/API settings |
+| `NEXT_PUBLIC_APP_URL` | Yes | Yes | `https://vmc-platform.vercel.app` |
+| `NEXT_PUBLIC_DRIVER_URL` | Yes | Yes | `https://vmc-platform.vercel.app/driver` |
+| `NEXT_PUBLIC_MANAGEMENT_URL` | Yes | Yes | `https://vmc-platform.vercel.app/management` |
+| `VMC_SITE_URL` | Yes for staff invitations | Yes | `https://vmc-platform.vercel.app` |
 
 The `NEXT_PUBLIC_` prefix is intentional: these values are used by the browser Supabase client. Database access remains protected by Supabase Auth and RLS.
 
@@ -24,7 +28,7 @@ Do **not** configure development-only values in Vercel:
 
 1. Push the current branch to GitHub.
 2. In Vercel, choose **Add New → Project**, import `STELLEN10/vmc-platform`, and keep the detected Next.js framework preset.
-3. Add the two required variables above to **Preview** and **Production**. Use a dedicated non-production Supabase project for Preview rather than production data.
+3. Add the listed variables to **Production** with the exact temporary Vercel URL above. Add matching Preview variables only if you create a Preview environment.
 4. Deploy the preview. Vercel runs `npm run build`, which is the project build command.
 5. Confirm the preview login page loads, then promote or merge to the production branch when ready.
 
@@ -55,11 +59,14 @@ vercel env run -e production -- npm run build
 
 In each Supabase project, open **Authentication → URL Configuration**.
 
-- Set **Site URL** to that environment's canonical Vercel URL.
-- Add `http://localhost:3000/**` for local development.
-- For Preview, add the narrow Vercel preview pattern for your Vercel account/team, such as `https://*-your-team-slug.vercel.app/**`.
-- Add the exact production domain separately.
-- Permit the registration and password-reset callback URLs documented in `docs/driver-registration-and-review.md`, plus `/auth/callback?next=/set-password` for staff invitations.
+- Set **Site URL** to `https://vmc-platform.vercel.app`.
+- Add `https://vmc-platform.vercel.app/**` to **Redirect URLs**.
+- Add these exact callback URLs to **Redirect URLs**:
+  - `https://vmc-platform.vercel.app/auth/callback?next=/driver/onboarding`
+  - `https://vmc-platform.vercel.app/auth/callback?next=/reset-password`
+  - `https://vmc-platform.vercel.app/auth/callback?next=/set-password`
+- Add `http://localhost:3000/**` only for local development.
+- Do not add a future VMC custom domain until it exists and DNS is configured.
 
 These settings allow Supabase email confirmation, password-reset and staff-invitation links to return safely through the server-side Auth callback.
 
