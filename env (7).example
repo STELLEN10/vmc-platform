@@ -1,0 +1,14 @@
+# Browser-safe Supabase project settings (Project Settings -> API).
+# The publishable key is safe to expose to the browser; RLS protects data access.
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_project_key
+
+# Temporary Vercel development/testing deployment. Change only through Vercel
+# configuration when VMC later adopts a custom domain.
+NEXT_PUBLIC_APP_URL=https://vmc-platform.vercel.app
+NEXT_PUBLIC_DRIVER_URL=https://vmc-platform.vercel.app/driver
+NEXT_PUBLIC_MANAGEMENT_URL=https://vmc-platform.vercel.app/management
+
+# Server-side invitation links may use this legacy-compatible value. It is a
+# public URL, not a secret. NEXT_PUBLIC_APP_URL is used when it is omitted.
+VMC_SITE_URL=https://vmc-platform.vercel.app
