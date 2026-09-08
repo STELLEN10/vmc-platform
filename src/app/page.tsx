@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 import { BrandMark } from "@/components/brand-mark";
 
@@ -16,13 +17,15 @@ export default function Home() {
           <p>The secure operating platform for Valhalla Motorcycles and its HERO delivery-rider fleet.</p>
           <Link className="button button--light" href="/login">Sign in to VMC</Link>
         </div>
-        <div className="motorcycle-silhouette" aria-hidden="true">
-          <span className="silhouette-wheel silhouette-wheel--left" />
-          <span className="silhouette-wheel silhouette-wheel--right" />
-          <span className="silhouette-frame" />
-          <span className="silhouette-seat" />
-          <span className="silhouette-handle" />
-          <span className="silhouette-headlight" />
+        <div className="landing-hero__bike">
+          <Image
+            src="/hero-eco-150.jpg"
+            alt="Red HERO Eco 150 delivery motorcycle"
+            width={2180}
+            height={1750}
+            priority
+            sizes="(max-width: 760px) 94vw, 48vw"
+          />
         </div>
       </section>
       <footer className="landing-footer content-width">
