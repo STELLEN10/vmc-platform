@@ -6,8 +6,9 @@ import { FEATURE_CATALOG } from "@/lib/features/catalog";
 import { createClient } from "@/lib/supabase/server";
 import { assignBetaTester, changeReleaseStatus, createRelease, setFeatureFlag } from "./actions";
 
-export default async function ReleaseControlPage() {
+export default async function ReleaseControlPage({ searchParams }: { searchParams: Promise<{ error?: string; updated?: string }> }) {
   const profile = await requireRole(MANAGEMENT_ROLES);
+  const { error, updated } = await searchParams;
   const supabase = await createClient();
   const { data: releases } = await supabase.from("releases").select("*").order("created_at", { ascending: false });
   const { data: flags } = profile.role === "admin"
@@ -17,6 +18,10 @@ export default async function ReleaseControlPage() {
 
   return <>
     <PageHeading eyebrow="VMC MANAGEMENT · CONTROL PLANE" title="Release control" description="Releases and feature flags control already-deployed behaviour. This screen never deploys source code." />
+    {updated === "1" && <p className="form-message form-message--success">Release Control updated successfully.</p>}
+    {error === "invalid" && <p className="form-message form-message--error">Check the release details. The core platform cannot be disabled, and beta access needs exactly one tester email or role.</p>}
+    {error === "not-found" && <p className="form-message form-message--error">No VMC account was found for that tester email address.</p>}
+    {error === "database" && <p className="form-message form-message--error">Release Control could not save this change. Confirm the latest Supabase migration has been applied, then try again.</p>}
     <section className="panel foundation-callout"><div><p className="eyebrow">CURRENT ACCESS</p><h2>{profile.role === "admin" ? "Administrator controls enabled" : "Release visibility only"}</h2><p>{profile.role === "admin" ? "Only administrators can create releases, change release state or alter global flags." : "Staff can view release state but cannot activate releases or alter feature flags."}</p></div><StatusBadge tone={profile.role === "admin" ? "green" : "slate"}>{profile.role}</StatusBadge></section>
     {profile.role === "admin" && <section className="review-grid release-admin-grid section-gap">
       <form className="panel review-form" action={createRelease}><p className="card-label">CREATE RELEASE</p><label>Version<input name="version" required placeholder="v0.2.0-beta.1" pattern="v\d+\.\d+\.\d+(-[A-Za-z0-9.]+)?" /></label><label>Channel<select name="channel" defaultValue="beta"><option value="beta">Beta</option><option value="stable">Stable</option></select></label><label>Release notes<textarea name="releaseNotes" placeholder="What changed in this deployed release?" /></label><button className="button button--primary" type="submit">Create release</button></form>
