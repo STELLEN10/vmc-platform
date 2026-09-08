@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
 
-export function ResetPasswordForm() {
+export function ResetPasswordForm({ invitation = false }: { invitation?: boolean }) {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,7 +33,7 @@ export function ResetPasswordForm() {
       return;
     }
 
-    router.replace("/auth/complete");
+    router.replace(invitation ? "/login?invited=1" : "/auth/complete");
     router.refresh();
   }
 
@@ -42,7 +42,7 @@ export function ResetPasswordForm() {
       <label>New password<input name="password" type="password" autoComplete="new-password" minLength={12} required /></label>
       <label>Confirm new password<input name="confirmation" type="password" autoComplete="new-password" minLength={12} required /></label>
       {message && <p className="form-message form-message--error" role="alert">{message}</p>}
-      <button className="button button--primary" type="submit" disabled={isSubmitting}>{isSubmitting ? "Updating…" : "Update password"}</button>
+      <button className="button button--primary" type="submit" disabled={isSubmitting}>{isSubmitting ? "Creating account…" : invitation ? "Create account" : "Update password"}</button>
     </form>
   );
 }

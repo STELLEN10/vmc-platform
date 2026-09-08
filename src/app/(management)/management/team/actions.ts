@@ -5,18 +5,20 @@ import { redirect } from "next/navigation";
 
 import { requireRole } from "@/lib/auth/authorization";
 import { ADMIN_ROLES } from "@/lib/auth/roles";
+import type { AppRole } from "@/lib/database.types";
 import { createAdminClient, getSiteUrl } from "@/lib/supabase/admin";
 
 function readText(formData: FormData, field: string) {
   return String(formData.get(field) ?? "").trim();
 }
 
-export async function inviteStaffMember(formData: FormData) {
+export async function inviteTeamMember(formData: FormData) {
   const admin = await requireRole(ADMIN_ROLES);
   const fullName = readText(formData, "fullName");
   const email = readText(formData, "email").toLowerCase();
+  const role = readText(formData, "role") as AppRole;
 
-  if (fullName.length < 2 || fullName.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (fullName.length < 2 || fullName.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !["admin", "staff"].includes(role)) {
     redirect("/management/team?error=invalid-invitation");
   }
 
@@ -30,15 +32,15 @@ export async function inviteStaffMember(formData: FormData) {
     redirect("/management/team?error=invite-failed");
   }
 
-  // The Auth trigger creates a default driver profile. Promotion happens only
-  // here, after the caller passed both server and database admin checks.
+  // The Auth trigger creates a default driver profile. Role assignment happens
+  // only in this server action after the caller has passed admin checks.
   const { error: profileError } = await client.from("profiles").upsert(
-    { id: data.user.id, full_name: fullName, email, role: "staff" },
+    { id: data.user.id, full_name: fullName, email, role },
     { onConflict: "id" },
   );
-  const { error: staffProfileError } = await client
-    .from("staff_profiles")
-    .upsert({ profile_id: data.user.id }, { onConflict: "profile_id" });
+  const { error: staffProfileError } = role === "staff"
+    ? await client.from("staff_profiles").upsert({ profile_id: data.user.id }, { onConflict: "profile_id" })
+    : { error: null };
 
   if (profileError || staffProfileError) {
     throw new Error("The invitation was sent, but staff access could not be provisioned. Contact VMC technical support before the recipient signs in.");
@@ -46,10 +48,10 @@ export async function inviteStaffMember(formData: FormData) {
 
   await client.from("audit_logs").insert({
     actor_id: admin.id,
-    action: "staff_invited",
+    action: role === "admin" ? "admin_invited" : "staff_invited",
     entity_type: "profile",
     entity_id: data.user.id,
-    new_values: { email, role: "staff" },
+    new_values: { email, role },
   });
 
   revalidatePath("/management/team");
