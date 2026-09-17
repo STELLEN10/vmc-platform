@@ -8,6 +8,7 @@ const managementNavigation = [
   { href: "/management", label: "Dashboard" },
   { href: "/management/drivers", label: "Drivers" },
   { href: "/management/bikes", label: "Bikes" },
+  { href: "/management/payments", label: "Payments" },
   { href: "/management/releases", label: "Release control" },
   { href: "/management/team", label: "Team access" },
   { href: "/management/settings", label: "Settings" },

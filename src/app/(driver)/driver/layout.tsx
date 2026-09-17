@@ -6,6 +6,7 @@ import { DRIVER_ROLES } from "@/lib/auth/roles";
 
 const driverNavigation = [
   { href: "/driver", label: "Overview" },
+  { href: "/driver/payments", label: "Payments" },
   { href: "/driver/profile", label: "My profile" },
   { href: "/driver/bike", label: "My motorcycle" },
   { href: "/driver/onboarding", label: "My onboarding" },

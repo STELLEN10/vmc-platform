@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import { BrandMark } from "@/components/brand-mark";
 import { SignOutButton } from "@/components/sign-out-button";
+import { PWAInstallButton } from "@/components/pwa-install-button";
 import type { AppRole } from "@/lib/database.types";
 
 export type NavigationItem = { href: string; label: string };
@@ -61,8 +62,8 @@ export function AppShell({ children, area, navigation, profile }: AppShellProps)
         </div>
         <div className="sidebar-account"><span className="account-name">{profile.fullName || "VMC account"}</span><span className="role-chip">{profile.role}</span><SignOutButton /></div>
       </aside>
-      <header className="mobile-app-header"><button className="shell-icon-button" type="button" onClick={() => setMobileMenuOpen((open) => !open)} aria-label="Open navigation" aria-expanded={mobileMenuOpen}><MenuIcon /></button><BrandMark compact href={area === "VMC Driver" ? "/driver" : "/management"} /><ThemeSwitch darkMode={darkMode} onToggle={toggleTheme} /></header>
-      <main className="app-main"><div className="shell-utility-bar"><ThemeSwitch darkMode={darkMode} onToggle={toggleTheme} /></div>{children}</main>
+      <header className="mobile-app-header"><button className="shell-icon-button" type="button" onClick={() => setMobileMenuOpen((open) => !open)} aria-label="Open navigation" aria-expanded={mobileMenuOpen}><MenuIcon /></button><BrandMark compact href={area === "VMC Driver" ? "/driver" : "/management"} /><div className="flex items-center gap-2"><PWAInstallButton className="!px-2 !py-1 !text-xs !min-h-0" /><ThemeSwitch darkMode={darkMode} onToggle={toggleTheme} /></div></header>
+      <main className="app-main"><div className="shell-utility-bar"><div className="flex items-center gap-3"><PWAInstallButton className="!px-2 !py-1 !text-xs !min-h-0" /><ThemeSwitch darkMode={darkMode} onToggle={toggleTheme} /></div></div>{children}</main>
     </div>
   );
 }

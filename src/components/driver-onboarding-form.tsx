@@ -42,7 +42,7 @@ const statusLabels: Record<DriverOnboardingStatus, string> = {
 
 export function DriverOnboardingForm({ profile, onboarding, hasAssignedBike }: Props) {
   const router = useRouter();
-  const [message, setMessage] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ text: string; isError: boolean } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState<DriverOnboardingStatus>(onboarding?.onboarding_status ?? "pending");
   const [platformValues, setPlatformValues] = useState<string[]>(onboarding?.delivery_platforms ?? []);
@@ -79,7 +79,7 @@ export function DriverOnboardingForm({ profile, onboarding, hasAssignedBike }: P
   async function save(event: FormEvent<HTMLFormElement>, submitForReview: boolean) {
     event.preventDefault();
     if (!canEdit) return;
-    setMessage(null);
+    setFeedback(null);
     setIsSaving(true);
     const data = new FormData(event.currentTarget);
     const fullName = String(data.get("fullName") ?? "").trim();
@@ -93,7 +93,7 @@ export function DriverOnboardingForm({ profile, onboarding, hasAssignedBike }: P
       .eq("id", profile.id);
 
     if (profileError) {
-      setMessage("We could not save your personal details. Please try again.");
+      setFeedback({ text: "We could not save your personal details. Please try again.", isError: true });
       setIsSaving(false);
       return;
     }
@@ -111,13 +111,13 @@ export function DriverOnboardingForm({ profile, onboarding, hasAssignedBike }: P
     );
 
     if (error) {
-      setMessage(submitForReview ? "Complete all required fields before submitting for review." : "We could not save your onboarding details. Please try again.");
+      setFeedback({ text: submitForReview ? "Complete all required fields before submitting for review." : "We could not save your onboarding details. Please try again.", isError: true });
       setIsSaving(false);
       return;
     }
 
     setStatus(nextStatus);
-    setMessage(submitForReview ? "Your profile is now submitted for VMC review." : "Your progress has been saved.");
+    setFeedback({ text: submitForReview ? "Your profile is now submitted for VMC review." : "Your progress has been saved.", isError: false });
     setIsSaving(false);
     router.refresh();
   }
@@ -151,7 +151,7 @@ export function DriverOnboardingForm({ profile, onboarding, hasAssignedBike }: P
           <span>Read-only for your security</span>
         </section>
         {canEdit && <div className="onboarding-actions"><button className="button driver-button" type="submit">{isSaving ? "Saving…" : "Save progress"}</button><button className="button button--primary" type="button" onClick={(event) => { const form = event.currentTarget.form; if (form) void save({ preventDefault: () => undefined, currentTarget: form } as FormEvent<HTMLFormElement>, true); }}>Submit for review</button></div>}
-        {message && <p className="form-message form-message--success" role="status">{message}</p>}
+        {feedback && <p className={`form-message form-message--${feedback.isError ? "error" : "success"}`} role="status">{feedback.text}</p>}
       </form>
     </div>
   );
