@@ -11,7 +11,14 @@ export default async function DriverPaymentsPage() {
 
   const { data: driver } = await supabase.from("drivers").select("id").eq("profile_id", profile.id).single();
 
-  type Contract = { id: string; start_date: string; weekly_amount: number; total_weeks: number; };
+  type Contract = {
+    id: string;
+    start_date: string;
+    weekly_amount: number;
+    total_weeks: number;
+    document_storage_path?: string | null;
+    document_file_name?: string | null;
+  };
   let contracts: Contract[] = [];
   type PaymentPeriod = {
     id: string;
@@ -22,6 +29,8 @@ export default async function DriverPaymentsPage() {
     rejection_reason?: string | null;
   };
   let paymentPeriods: PaymentPeriod[] = [];
+  let contractViewUrl: string | null = null;
+  let contractDownloadUrl: string | null = null;
 
   if (driver) {
     const { data } = await supabase.from("contracts").select("*").eq("driver_id", driver.id).order("created_at", { ascending: false });
@@ -30,6 +39,20 @@ export default async function DriverPaymentsPage() {
     if (contracts.length > 0) {
       const { data: periods } = await supabase.from("payment_periods").select("*").eq("contract_id", contracts[0].id).order("period_number", { ascending: true });
       paymentPeriods = periods ?? [];
+
+      if (contracts[0].document_storage_path) {
+        const { data: viewSigned } = await supabase.storage
+          .from("vmc-application-documents")
+          .createSignedUrl(contracts[0].document_storage_path, 300);
+        contractViewUrl = viewSigned?.signedUrl ?? `/api/contracts/${contracts[0].id}/document`;
+
+        const { data: downloadSigned } = await supabase.storage
+          .from("vmc-application-documents")
+          .createSignedUrl(contracts[0].document_storage_path, 300, {
+            download: contracts[0].document_file_name || "VMC_Rent_to_Own_Contract.pdf",
+          });
+        contractDownloadUrl = downloadSigned?.signedUrl ?? `/api/contracts/${contracts[0].id}/document?download=1`;
+      }
     }
   }
 
@@ -86,6 +109,40 @@ export default async function DriverPaymentsPage() {
               <div className="flex justify-between"><span className="text-muted">Start Date</span><span>{contracts[0].start_date}</span></div>
               <div className="flex justify-between"><span className="text-muted">Weekly Rent</span><span>R{contracts[0].weekly_amount}</span></div>
               <div className="flex justify-between"><span className="text-muted">Total Weeks</span><span>{contracts[0].total_weeks}</span></div>
+            </div>
+
+            <div className="pt-3 border-t border-line text-xs">
+              <p className="card-label mb-2">CONTRACT DOCUMENT</p>
+              {contracts[0].document_storage_path ? (
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2 p-2 rounded bg-paper/60 border border-line">
+                    <span aria-hidden="true">📄</span>
+                    <span className="font-medium text-foreground truncate">
+                      {contracts[0].document_file_name || "VMC Rent-to-Own Contract"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mt-1">
+                    <a
+                      href={contractViewUrl ?? `/api/contracts/${contracts[0].id}/document`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="button button--secondary text-xs text-center py-1.5"
+                    >
+                      View Contract
+                    </a>
+                    <a
+                      href={contractDownloadUrl ?? `/api/contracts/${contracts[0].id}/document?download=1`}
+                      className="button button--primary text-xs text-center py-1.5"
+                    >
+                      Download PDF
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-muted text-xs">
+                  Your contract document is not available yet.
+                </p>
+              )}
             </div>
           </aside>
         </div>

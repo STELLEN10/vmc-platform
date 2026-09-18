@@ -329,6 +329,11 @@ export type Database = {
           activated_at: string | null;
           completed_at: string | null;
           terms_notes: string | null;
+          document_storage_path: string | null;
+          document_file_name: string | null;
+          document_uploaded_at: string | null;
+          document_file_size_bytes: number | null;
+          document_mime_type: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -345,6 +350,11 @@ export type Database = {
           activated_at?: string | null;
           completed_at?: string | null;
           terms_notes?: string | null;
+          document_storage_path?: string | null;
+          document_file_name?: string | null;
+          document_uploaded_at?: string | null;
+          document_file_size_bytes?: number | null;
+          document_mime_type?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -360,6 +370,11 @@ export type Database = {
           activated_at?: string | null;
           completed_at?: string | null;
           terms_notes?: string | null;
+          document_storage_path?: string | null;
+          document_file_name?: string | null;
+          document_uploaded_at?: string | null;
+          document_file_size_bytes?: number | null;
+          document_mime_type?: string | null;
           updated_at?: string;
         };
         Relationships: [

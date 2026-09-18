@@ -168,3 +168,96 @@ export async function unassignBikeFromDriver(formData: FormData) {
   revalidatePath(`/management/drivers/${profileId}`);
   revalidatePath("/management/bikes");
 }
+
+export async function uploadContractPdf(
+  prevState: unknown,
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  try {
+    await requireRole(MANAGEMENT_ROLES);
+  } catch {
+    return { error: "You must be signed in with VMC management permissions." };
+  }
+
+  const profileId = String(formData.get("profileId") ?? "").trim();
+  const contractId = String(formData.get("contractId") ?? "").trim();
+  const file = formData.get("file") as File | null;
+
+  if (!profileId || !contractId) {
+    return { error: "Missing driver profile or contract reference." };
+  }
+
+  if (!file || typeof file.size !== "number" || file.size === 0) {
+    return { error: "Please select a contract PDF to upload." };
+  }
+
+  // Server-side PDF validation: extension, MIME type, and size
+  const fileName = file.name ? file.name.trim() : "contract.pdf";
+  const isPdfExtension = fileName.toLowerCase().endsWith(".pdf");
+  const isPdfMime = file.type === "application/pdf" || file.type === "application/x-pdf";
+
+  if (!isPdfExtension || (!isPdfMime && file.type !== "")) {
+    return { error: "Invalid file format. Only official PDF documents (.pdf) are accepted." };
+  }
+
+  const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024; // 15MB
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    return { error: "Contract file exceeds the 15MB limit. Please upload a smaller PDF." };
+  }
+
+  const supabase = createAdminClient();
+
+  // Verify the contract exists
+  const { data: contract, error: contractErr } = await supabase
+    .from("contracts")
+    .select("id, driver_id")
+    .eq("id", contractId)
+    .maybeSingle();
+
+  if (contractErr || !contract) {
+    return { error: "Contract record could not be found." };
+  }
+
+  // Predictable isolated path: contracts/{profileId}/{contractId}.pdf
+  const storagePath = `contracts/${profileId}/${contractId}.pdf`;
+
+  try {
+    const fileBuffer = await file.arrayBuffer();
+    const { error: uploadError } = await supabase.storage
+      .from("vmc-application-documents")
+      .upload(storagePath, Buffer.from(fileBuffer), {
+        upsert: true,
+        contentType: "application/pdf",
+      });
+
+    if (uploadError) {
+      console.error("Storage upload error for contract PDF:", uploadError);
+      return { error: "Failed to upload contract PDF to secure storage." };
+    }
+
+    const { error: updateError } = await supabase
+      .from("contracts")
+      .update({
+        document_storage_path: storagePath,
+        document_file_name: fileName,
+        document_uploaded_at: new Date().toISOString(),
+        document_file_size_bytes: file.size,
+        document_mime_type: "application/pdf",
+      })
+      .eq("id", contractId);
+
+    if (updateError) {
+      console.error("DB update error for contract PDF metadata:", updateError);
+      return { error: "Contract PDF uploaded, but failed to save document reference." };
+    }
+  } catch (err) {
+    console.error("Unexpected error during contract PDF upload:", err);
+    return { error: "An unexpected error occurred while processing the contract PDF." };
+  }
+
+  revalidatePath(`/management/drivers/${profileId}`);
+  revalidatePath("/driver/payments");
+  revalidatePath("/driver/profile");
+
+  return { success: true };
+}
