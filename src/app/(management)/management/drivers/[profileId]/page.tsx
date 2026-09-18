@@ -23,7 +23,9 @@ export default async function ManagementDriverReviewPage({ params }: { params: P
 
   if (!profile || !onboarding) notFound();
 
-  const { data: contracts } = await (supabase.from("contracts") as any).select("*").eq("driver_id", driver?.id).order("created_at", { ascending: false });
+  const { data: contracts } = driver?.id
+    ? await supabase.from("contracts").select("*").eq("driver_id", driver.id).order("created_at", { ascending: false })
+    : { data: null };
 
   return <>
     <PageHeading eyebrow="VMC MANAGEMENT · DRIVER REVIEW" title={profile.full_name || "New driver"} description="Review driver-provided onboarding information. Motorcycle, contract and operational assignments remain VMC-managed." actions={<Link className="text-action" href="/management/drivers">Back to drivers</Link>} />

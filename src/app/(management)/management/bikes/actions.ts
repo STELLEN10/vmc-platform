@@ -6,6 +6,8 @@ import { requireRole } from "@/lib/auth/authorization";
 import { MANAGEMENT_ROLES } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 
+import type { BikeStatus } from "@/lib/database.types";
+
 export async function addBike(formData: FormData) {
   await requireRole(MANAGEMENT_ROLES);
   const supabase = await createClient();
@@ -44,11 +46,33 @@ export async function editBikeStatus(bikeId: string, status: string) {
   await requireRole(MANAGEMENT_ROLES);
   const supabase = await createClient();
 
-  const { error } = await supabase.from("bikes").update({ status: status as any }).eq("id", bikeId);
+  // Guard against changing status if bike is actively assigned
+  const { data: activeAssignment, error: assignmentError } = await supabase
+    .from("bike_assignments")
+    .select("id")
+    .eq("bike_id", bikeId)
+    .eq("status", "assigned")
+    .maybeSingle();
+
+  if (assignmentError) {
+    console.error("Error checking bike assignment:", assignmentError);
+    return { error: "Failed to verify bike assignment status" };
+  }
+
+  if (activeAssignment && status !== "assigned") {
+    return {
+      error: "Cannot change status of an actively assigned bike. Please unassign the bike first.",
+    };
+  }
+
+  const { error } = await supabase
+    .from("bikes")
+    .update({ status: status as BikeStatus })
+    .eq("id", bikeId);
 
   if (error) {
     console.error("Error updating bike status:", error);
-    return { error: "Failed to update status" };
+    return { error: error.message || "Failed to update status" };
   }
 
   revalidatePath("/management/bikes");

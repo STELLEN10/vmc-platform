@@ -18,18 +18,20 @@ export async function verifyPayment(formData: FormData) {
 
   // Use regular client with management JWT to call RPC
   const userSupabase = await createClient();
-  const newStatus = action === "approve" ? "paid" : "overdue";
-  const note = action === "approve" ? "Payment verified by VMC." : "Payment proof rejected by VMC.";
+  const newStatus = action === "approve" ? "verified" : "rejected";
+  const customReason = String(formData.get("reason") ?? "").trim();
+  const defaultReason = action === "approve" ? "Payment verified by VMC." : "Payment proof rejected by VMC.";
+  const reason = customReason || defaultReason;
 
-  const { error } = await userSupabase.rpc("transition_payment_period" as any, {
-    p_period_id: periodId,
+  const { error } = await userSupabase.rpc("transition_payment_period", {
+    p_payment_period_id: periodId,
     p_status: newStatus,
-    p_note: note,
+    p_reason: reason,
   });
 
   if (error) {
     console.error("Error verifying payment:", error);
-    throw new Error("Failed to update payment status.");
+    throw new Error(error.message || "Failed to update payment status.");
   }
 
   revalidatePath("/management/payments");

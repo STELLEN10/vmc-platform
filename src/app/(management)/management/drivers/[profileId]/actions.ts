@@ -53,9 +53,15 @@ export async function assignBikeToDriver(formData: FormData) {
   const { data: driver } = await supabase.from("drivers").select("id").eq("profile_id", profileId).single();
   if (!driver) throw new Error("Driver not found");
 
-  await (supabase.from("bike_assignments") as any).update({ status: "ended", ended_at: new Date().toISOString() }).eq("driver_id", driver.id).eq("status", "assigned");
+  const today = new Date().toISOString().split("T")[0];
+
+  await supabase
+    .from("bike_assignments")
+    .update({ status: "ended", ended_at: today })
+    .eq("driver_id", driver.id)
+    .eq("status", "assigned");
   
-  await (supabase.from("bike_assignments") as any).insert({
+  await supabase.from("bike_assignments").insert({
     bike_id: bikeId,
     driver_id: driver.id,
     status: "assigned",
@@ -85,7 +91,7 @@ export async function createContract(formData: FormData) {
 
   const supabase = createAdminClient();
 
-  const { data: contract, error: contractError } = await (supabase.from("contracts") as any).insert({
+  const { data: contract, error: contractError } = await supabase.from("contracts").insert({
     driver_id: driverId,
     bike_id: bikeId,
     start_date: startDate,
@@ -97,14 +103,14 @@ export async function createContract(formData: FormData) {
     activated_at: new Date().toISOString(),
   }).select("id").single();
 
-  if (contractError) {
+  if (contractError || !contract) {
     console.error("Contract Error:", contractError);
     throw new Error("Failed to create contract.");
   }
 
   // Use the standard client with the management user's JWT to call the RPC since it relies on RLS auth checking for is_management()
   const userSupabase = await createClient();
-  const { error: rpcError } = await userSupabase.rpc("generate_contract_payment_schedule" as any, { p_contract_id: (contract as any).id });
+  const { error: rpcError } = await userSupabase.rpc("generate_contract_payment_schedule", { p_contract_id: contract.id });
   
   if (rpcError) {
     console.error("RPC Error:", rpcError);
@@ -127,7 +133,12 @@ export async function unassignBikeFromDriver(formData: FormData) {
   
   if (!driver || !driver.bike_id) return;
 
-  await (supabase.from("bike_assignments") as any).update({ status: "ended", ended_at: new Date().toISOString() }).eq("driver_id", driver.id).eq("status", "assigned");
+  const today = new Date().toISOString().split("T")[0];
+  await supabase
+    .from("bike_assignments")
+    .update({ status: "ended", ended_at: today })
+    .eq("driver_id", driver.id)
+    .eq("status", "assigned");
   await supabase.from("drivers").update({ bike_id: null }).eq("id", driver.id);
   await supabase.from("bikes").update({ status: "available" }).eq("id", driver.bike_id);
 

@@ -1,6 +1,17 @@
 export type AppRole = "admin" | "staff" | "driver";
 export type DriverStatus = "active" | "inactive" | "suspended";
-export type BikeStatus = "available" | "assigned" | "maintenance" | "inactive";
+export type BikeStatus = "available" | "assigned" | "maintenance" | "inactive" | "repair" | "retired";
+export type BikeAssignmentStatus = "assigned" | "returned" | "ended";
+export type ContractStatus = "draft" | "active" | "completed" | "cancelled" | "suspended";
+export type PaymentStatus =
+  | "upcoming"
+  | "due"
+  | "submitted"
+  | "awaiting_verification"
+  | "verified"
+  | "rejected"
+  | "overdue";
+export type PaymentRecordSource = "scheduled" | "historical" | "adjustment";
 export type DriverOnboardingStatus =
   | "pending"
   | "incomplete"
@@ -71,7 +82,15 @@ export type Database = {
           start_date?: string | null;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "drivers_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       bikes: {
         Row: {
@@ -244,6 +263,256 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      bike_assignments: {
+        Row: {
+          id: string;
+          bike_id: string;
+          driver_id: string;
+          assigned_at: string;
+          ended_at: string | null;
+          status: BikeAssignmentStatus;
+          assigned_by: string | null;
+          end_note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          bike_id: string;
+          driver_id: string;
+          assigned_at?: string;
+          ended_at?: string | null;
+          status?: BikeAssignmentStatus;
+          assigned_by?: string | null;
+          end_note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          bike_id?: string;
+          driver_id?: string;
+          assigned_at?: string;
+          ended_at?: string | null;
+          status?: BikeAssignmentStatus;
+          assigned_by?: string | null;
+          end_note?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bike_assignments_bike_id_fkey";
+            columns: ["bike_id"];
+            isOneToOne: false;
+            referencedRelation: "bikes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "bike_assignments_driver_id_fkey";
+            columns: ["driver_id"];
+            isOneToOne: false;
+            referencedRelation: "drivers";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      contracts: {
+        Row: {
+          id: string;
+          driver_id: string;
+          bike_id: string;
+          start_date: string;
+          weekly_amount: number;
+          total_weeks: number;
+          payment_weekday: number;
+          status: ContractStatus;
+          created_by: string | null;
+          activated_at: string | null;
+          completed_at: string | null;
+          terms_notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          driver_id: string;
+          bike_id: string;
+          start_date: string;
+          weekly_amount: number;
+          total_weeks: number;
+          payment_weekday?: number;
+          status?: ContractStatus;
+          created_by?: string | null;
+          activated_at?: string | null;
+          completed_at?: string | null;
+          terms_notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          driver_id?: string;
+          bike_id?: string;
+          start_date?: string;
+          weekly_amount?: number;
+          total_weeks?: number;
+          payment_weekday?: number;
+          status?: ContractStatus;
+          created_by?: string | null;
+          activated_at?: string | null;
+          completed_at?: string | null;
+          terms_notes?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "contracts_driver_id_fkey";
+            columns: ["driver_id"];
+            isOneToOne: false;
+            referencedRelation: "drivers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "contracts_bike_id_fkey";
+            columns: ["bike_id"];
+            isOneToOne: false;
+            referencedRelation: "bikes";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      payment_periods: {
+        Row: {
+          id: string;
+          contract_id: string;
+          period_number: number;
+          due_date: string;
+          amount_due: number;
+          status: PaymentStatus;
+          source: PaymentRecordSource;
+          original_payment_date: string | null;
+          submitted_at: string | null;
+          reviewed_at: string | null;
+          verified_at: string | null;
+          reviewed_by: string | null;
+          verified_by: string | null;
+          rejection_reason: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          contract_id: string;
+          period_number: number;
+          due_date: string;
+          amount_due: number;
+          status?: PaymentStatus;
+          source?: PaymentRecordSource;
+          original_payment_date?: string | null;
+          submitted_at?: string | null;
+          reviewed_at?: string | null;
+          verified_at?: string | null;
+          reviewed_by?: string | null;
+          verified_by?: string | null;
+          rejection_reason?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          contract_id?: string;
+          period_number?: number;
+          due_date?: string;
+          amount_due?: number;
+          status?: PaymentStatus;
+          source?: PaymentRecordSource;
+          original_payment_date?: string | null;
+          submitted_at?: string | null;
+          reviewed_at?: string | null;
+          verified_at?: string | null;
+          reviewed_by?: string | null;
+          verified_by?: string | null;
+          rejection_reason?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payment_periods_contract_id_fkey";
+            columns: ["contract_id"];
+            isOneToOne: false;
+            referencedRelation: "contracts";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      payment_proofs: {
+        Row: {
+          id: string;
+          payment_period_id: string;
+          storage_bucket: string;
+          storage_path: string;
+          file_name: string;
+          mime_type: string;
+          file_size_bytes: number;
+          submitted_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          payment_period_id: string;
+          storage_bucket: string;
+          storage_path: string;
+          file_name: string;
+          mime_type: string;
+          file_size_bytes: number;
+          submitted_by: string;
+          created_at?: string;
+        };
+        Update: {
+          payment_period_id?: string;
+          storage_bucket?: string;
+          storage_path?: string;
+          file_name?: string;
+          mime_type?: string;
+          file_size_bytes?: number;
+          submitted_by?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payment_proofs_payment_period_id_fkey";
+            columns: ["payment_period_id"];
+            isOneToOne: false;
+            referencedRelation: "payment_periods";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "payment_proofs_submitted_by_fkey";
+            columns: ["submitted_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      payment_events: {
+        Row: {
+          id: string;
+          payment_period_id: string;
+          actor_id: string | null;
+          previous_status: PaymentStatus | null;
+          next_status: PaymentStatus;
+          reason: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          payment_period_id: string;
+          actor_id?: string | null;
+          previous_status?: PaymentStatus | null;
+          next_status: PaymentStatus;
+          reason?: string | null;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -253,6 +522,30 @@ export type Database = {
       review_driver_onboarding: {
         Args: { p_profile_id: string; p_status: DriverOnboardingStatus; p_review_note?: string | null };
         Returns: undefined;
+      };
+      generate_contract_payment_schedule: {
+        Args: { p_contract_id: string };
+        Returns: number;
+      };
+      transition_payment_period: {
+        Args: {
+          p_payment_period_id: string;
+          p_status: PaymentStatus;
+          p_reason?: string | null;
+        };
+        Returns: undefined;
+      };
+      assign_bike_to_driver: {
+        Args: { p_driver_profile_id: string; p_bike_id: string };
+        Returns: undefined;
+      };
+      unassign_bike_from_driver: {
+        Args: { p_driver_profile_id: string };
+        Returns: undefined;
+      };
+      is_driver_owner: {
+        Args: { p_driver_id: string };
+        Returns: boolean;
       };
       create_release: {
         Args: { p_version: string; p_channel: ReleaseChannel; p_release_notes?: string | null };
@@ -278,8 +571,12 @@ export type Database = {
     Enums: {
       app_role: AppRole;
       bike_status: BikeStatus;
+      bike_assignment_status: BikeAssignmentStatus;
+      contract_status: ContractStatus;
       driver_status: DriverStatus;
       driver_onboarding_status: DriverOnboardingStatus;
+      payment_status: PaymentStatus;
+      payment_record_source: PaymentRecordSource;
       release_channel: ReleaseChannel;
       release_status: ReleaseStatus;
     };

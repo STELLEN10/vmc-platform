@@ -13,7 +13,14 @@ export default async function DriverPaymentsPage() {
 
   type Contract = { id: string; start_date: string; weekly_amount: number; total_weeks: number; };
   let contracts: Contract[] = [];
-  type PaymentPeriod = { id: string; period_number: number; due_date: string; amount_due: number; status: string; };
+  type PaymentPeriod = {
+    id: string;
+    period_number: number;
+    due_date: string;
+    amount_due: number;
+    status: string;
+    rejection_reason?: string | null;
+  };
   let paymentPeriods: PaymentPeriod[] = [];
 
   if (driver) {
@@ -56,8 +63,13 @@ export default async function DriverPaymentsPage() {
                       <td className="py-4 px-3 align-top">{period.due_date}</td>
                       <td className="py-4 px-3 align-top">R{period.amount_due}</td>
                       <td className="py-4 px-3 align-top text-right flex flex-col items-end gap-2">
-                        <StatusBadge tone={period.status === "paid" ? "green" : period.status === "overdue" ? "red" : "blue"}>{period.status}</StatusBadge>
-                        {(period.status === "due" || period.status === "overdue") && (
+                        <StatusBadge tone={period.status === "verified" ? "green" : (period.status === "overdue" || period.status === "rejected") ? "red" : "blue"}>
+                          {period.status === "verified" ? "Verified" : period.status === "awaiting_verification" ? "Awaiting Review" : period.status}
+                        </StatusBadge>
+                        {period.rejection_reason && (
+                          <span className="text-xs text-red-500 max-w-xs text-right">Reason: {period.rejection_reason}</span>
+                        )}
+                        {(period.status === "due" || period.status === "overdue" || period.status === "rejected") && (
                           <UploadProofForm paymentPeriodId={period.id} />
                         )}
                       </td>

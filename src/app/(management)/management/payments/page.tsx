@@ -33,12 +33,12 @@ export default async function ManagementPaymentsPage() {
         )
       )
     `)
-    .eq("payment_periods.status", "processing")
+    .eq("payment_periods.status", "awaiting_verification")
     .order("created_at", { ascending: false });
 
   // Generate signed URLs
   const proofsWithUrls = await Promise.all(
-    (proofs || []).map(async (proof: { id: string; file_name: string; storage_path: string; payment_period_id: string; signedUrl?: string; payment_periods: { period_number: number; amount_due: number; status: string; contracts: { drivers: { profiles: { full_name: string; email: string } } } } }) => {
+    (proofs || []).map(async (proof) => {
       const { data } = await supabase.storage
         .from("vmc-application-documents")
         .createSignedUrl(proof.storage_path, 3600);
@@ -68,7 +68,7 @@ export default async function ManagementPaymentsPage() {
                 </tr>
               </thead>
               <tbody>
-                {proofsWithUrls.map((proof: { id: string; file_name: string; storage_path: string; payment_period_id: string; signedUrl?: string; payment_periods: { period_number: number; amount_due: number; status: string; contracts: { drivers: { profiles: { full_name: string; email: string } } } } }) => (
+                {proofsWithUrls.map((proof) => (
                   <tr key={proof.id} className="border-b border-line/50 hover:bg-paper/50">
                     <td className="py-3 px-3">
                       <div className="font-medium">{proof.payment_periods.contracts.drivers.profiles.full_name}</div>

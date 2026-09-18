@@ -39,19 +39,25 @@ export default async function ManagementBikesPage() {
                 <div>VIN: {bike.vin || "-"}</div>
                 <div>Engine: {bike.engine_number || "-"}</div>
               </div>
-              <form action={async (formData) => {
-                "use server";
-                const newStatus = formData.get("status") as string;
-                if (newStatus) await editBikeStatus(bike.id, newStatus);
-              }} className="mt-3 border-t border-line pt-3 flex items-center justify-between">
-                <select name="status" defaultValue={bike.status} className="text-xs p-1 rounded border border-line bg-paper text-ink" aria-label="Bike status">
-                  <option value="available">Available</option>
-                  <option value="assigned" disabled>Assigned</option>
-                  <option value="maintenance">Maintenance</option>
-                  <option value="retired">Retired</option>
-                </select>
-                <button type="submit" className="text-action text-xs">Update</button>
-              </form>
+              {bike.status === "assigned" ? (
+                <div className="mt-3 border-t border-line pt-3 text-xs text-muted flex items-center justify-between">
+                  <span>Actively assigned to driver</span>
+                  <span className="text-[11px] text-muted-foreground">Unassign to change</span>
+                </div>
+              ) : (
+                <form action={async (formData) => {
+                  "use server";
+                  const newStatus = formData.get("status") as string;
+                  if (newStatus) await editBikeStatus(bike.id, newStatus);
+                }} className="mt-3 border-t border-line pt-3 flex items-center justify-between">
+                  <select name="status" defaultValue={bike.status} className="text-xs p-1 rounded border border-line bg-paper text-ink" aria-label="Bike status">
+                    <option value="available">Available</option>
+                    <option value="maintenance">Maintenance</option>
+                    <option value="retired">Retired</option>
+                  </select>
+                  <button type="submit" className="text-action text-xs">Update</button>
+                </form>
+              )}
             </article>
           ))}
         </section>
