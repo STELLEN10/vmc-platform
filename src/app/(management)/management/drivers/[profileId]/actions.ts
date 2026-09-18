@@ -12,14 +12,23 @@ const managementStatuses: DriverOnboardingStatus[] = [
   "under_review", "approved", "active", "changes_requested", "rejected", "suspended",
 ];
 
-export async function reviewDriverOnboarding(formData: FormData) {
-  await requireRole(MANAGEMENT_ROLES);
+export async function reviewDriverOnboarding(formData: FormData): Promise<{ error?: string; success?: boolean }> {
+  try {
+    await requireRole(MANAGEMENT_ROLES);
+  } catch {
+    return { error: "You must be signed in with VMC management permissions." };
+  }
+
   const profileId = String(formData.get("profileId") ?? "");
   const status = String(formData.get("status") ?? "") as DriverOnboardingStatus;
   const reviewNote = String(formData.get("reviewNote") ?? "").trim() || null;
 
-  if (!profileId || !managementStatuses.includes(status)) {
-    throw new Error("Invalid driver review request.");
+  if (!profileId) {
+    return { error: "Missing driver profile ID." };
+  }
+
+  if (!managementStatuses.includes(status)) {
+    return { error: "Invalid driver review status selected." };
   }
 
   const supabase = await createClient();
@@ -30,13 +39,27 @@ export async function reviewDriverOnboarding(formData: FormData) {
   });
 
   if (error) {
-    throw new Error("Could not update the driver review status.");
+    console.error("Database error during driver review:", error);
+
+    // Map known database error messages to clear, safe user-facing feedback
+    if (error.message?.includes("Only VMC management can review driver onboarding")) {
+      return { error: "Only VMC management can review driver onboarding." };
+    }
+    if (error.message?.includes("Driver onboarding record not found")) {
+      return { error: "Driver onboarding record could not be found." };
+    }
+    if (error.message?.includes("Invalid management onboarding status")) {
+      return { error: "The selected review status is not permitted." };
+    }
+    return { error: "Unable to update driver review status. Please try again." };
   }
 
   revalidatePath(`/management/drivers/${profileId}`);
   revalidatePath("/management/drivers");
   revalidatePath("/management");
   revalidatePath("/driver/onboarding");
+
+  return { success: true };
 }
 
 export async function assignBikeToDriver(formData: FormData) {
