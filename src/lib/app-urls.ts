@@ -20,7 +20,9 @@ function readAbsoluteUrl(value: string | undefined, variableName: string) {
 export function getApplicationUrl() {
   const configured = readAbsoluteUrl(process.env.NEXT_PUBLIC_APP_URL, "NEXT_PUBLIC_APP_URL")
     ?? readAbsoluteUrl(process.env.VMC_SITE_URL, "VMC_SITE_URL");
-  if (!configured) throw new Error("NEXT_PUBLIC_APP_URL or VMC_SITE_URL is required for server-generated VMC links.");
+  if (!configured) {
+    return "http://localhost:3000";
+  }
   return configured.origin;
 }
 

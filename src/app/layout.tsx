@@ -19,6 +19,10 @@ export const metadata: Metadata = {
     template: "%s | VMC Platform",
   },
   description: "Secure operations platform for Valhalla Motorcycles.",
+  openGraph: {
+    title: "VMC Platform",
+    description: "Secure operations platform for Valhalla Motorcycles.",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

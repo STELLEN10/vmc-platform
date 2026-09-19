@@ -91,6 +91,7 @@ export type Database = {
           full_name: string;
           email: string | null;
           phone: string | null;
+          phone_number: string | null;
           role: AppRole;
           created_at: string;
           updated_at: string;
@@ -100,6 +101,7 @@ export type Database = {
           full_name?: string;
           email?: string | null;
           phone?: string | null;
+          phone_number?: string | null;
           role?: AppRole;
           created_at?: string;
           updated_at?: string;
@@ -108,6 +110,7 @@ export type Database = {
           full_name?: string;
           email?: string | null;
           phone?: string | null;
+          phone_number?: string | null;
           role?: AppRole;
           updated_at?: string;
         };
@@ -254,16 +257,100 @@ export type Database = {
       management_notifications: {
         Row: {
           id: string;
-          type: "driver_onboarding_submitted";
+          type: string;
           driver_profile_id: string;
           title: string;
           body: string;
           created_at: string;
           read_at: string | null;
           read_by: string | null;
+          related_entity_type?: string | null;
+          related_entity_id?: string | null;
+          action_url?: string | null;
+          severity?: string | null;
         };
-        Insert: never;
-        Update: { read_at?: string | null; read_by?: string | null };
+        Insert: {
+          id?: string;
+          type?: string;
+          driver_profile_id: string;
+          title: string;
+          body: string;
+          created_at?: string;
+          read_at?: string | null;
+          read_by?: string | null;
+          related_entity_type?: string | null;
+          related_entity_id?: string | null;
+          action_url?: string | null;
+          severity?: string | null;
+        };
+        Update: {
+          read_at?: string | null;
+          read_by?: string | null;
+          action_url?: string | null;
+          severity?: string | null;
+        };
+        Relationships: [];
+      };
+      notifications: {
+        Row: {
+          id: string;
+          recipient_profile_id: string;
+          channel: "in_app" | "sms" | "email" | "whatsapp" | "push";
+          type: string;
+          title: string;
+          body: string;
+          status: "unread" | "read" | "archived";
+          related_entity_type: string | null;
+          related_entity_id: string | null;
+          action_url: string | null;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          recipient_profile_id: string;
+          channel?: "in_app" | "sms" | "email" | "whatsapp" | "push";
+          type: string;
+          title: string;
+          body: string;
+          status?: "unread" | "read" | "archived";
+          related_entity_type?: string | null;
+          related_entity_id?: string | null;
+          action_url?: string | null;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          status?: "unread" | "read" | "archived";
+          read_at?: string | null;
+          action_url?: string | null;
+        };
+        Relationships: [];
+      };
+      system_settings: {
+        Row: {
+          key: string;
+          value: unknown;
+          category: string;
+          description: string | null;
+          updated_by: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          key: string;
+          value: unknown;
+          category?: string;
+          description?: string | null;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          value?: unknown;
+          category?: string;
+          description?: string | null;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
         Relationships: [];
       };
       releases: {
@@ -1044,6 +1131,25 @@ export type Database = {
       assign_feature_flag_tester: {
         Args: { p_key: string; p_profile_id?: string | null; p_role?: AppRole | null };
         Returns: undefined;
+      };
+      mark_notification_read: {
+        Args: { p_notification_id: string; p_is_read?: boolean };
+        Returns: undefined;
+      };
+      mark_all_notifications_read: {
+        Args: Record<string, never>;
+        Returns: undefined;
+      };
+      search_global: {
+        Args: { p_query: string };
+        Returns: {
+          drivers: Array<{ id: string; title: string; subtitle: string; role: string; url: string }>;
+          bikes: Array<{ id: string; title: string; subtitle: string; url: string }>;
+          contracts: Array<{ id: string; title: string; subtitle: string; url: string }>;
+          maintenance: Array<{ id: string; title: string; subtitle: string; url: string }>;
+          emergencies: Array<{ id: string; title: string; subtitle: string; url: string }>;
+          parts: Array<{ id: string; title: string; subtitle: string; url: string }>;
+        };
       };
     };
     Enums: {
