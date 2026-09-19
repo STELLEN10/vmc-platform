@@ -78,3 +78,34 @@ export async function editBikeStatus(bikeId: string, status: string) {
   revalidatePath("/management/bikes");
   return { success: true };
 }
+
+export async function updateBikeMileage(bikeId: string, mileageKm: number, nextServiceKm?: number | null) {
+  await requireRole(MANAGEMENT_ROLES);
+  const supabase = await createClient();
+
+  if (mileageKm < 0 || isNaN(mileageKm)) {
+    return { error: "Mileage must be a positive number" };
+  }
+
+  const payload: { current_mileage_km: number; next_service_due_km?: number | null } = {
+    current_mileage_km: Math.floor(mileageKm),
+  };
+
+  if (nextServiceKm !== undefined) {
+    payload.next_service_due_km = nextServiceKm ? Math.floor(nextServiceKm) : null;
+  }
+
+  const { error } = await supabase
+    .from("bikes")
+    .update(payload)
+    .eq("id", bikeId);
+
+  if (error) {
+    console.error("Error updating bike mileage:", error);
+    return { error: error.message || "Failed to update mileage" };
+  }
+
+  revalidatePath("/management/bikes");
+  revalidatePath("/driver/bike");
+  return { success: true };
+}

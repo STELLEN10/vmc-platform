@@ -4,14 +4,14 @@ import { requireRole } from "@/lib/auth/authorization";
 import { MANAGEMENT_ROLES } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
 import { AddBikeForm } from "./add-bike-form";
-import { editBikeStatus } from "./actions";
+import { editBikeStatus, updateBikeMileage } from "./actions";
 
 export default async function ManagementBikesPage() {
   await requireRole(MANAGEMENT_ROLES);
   const supabase = await createClient();
   const { data: bikes } = await supabase
     .from("bikes")
-    .select("id, brand, model, colour, registration_number, status, vin, engine_number")
+    .select("id, brand, model, colour, registration_number, status, vin, engine_number, current_mileage_km, next_service_due_km")
     .order("created_at", { ascending: false });
 
   return (
@@ -38,7 +38,27 @@ export default async function ManagementBikesPage() {
               <div className="mt-2 text-xs text-muted space-y-1">
                 <div>VIN: {bike.vin || "-"}</div>
                 <div>Engine: {bike.engine_number || "-"}</div>
+                <div className="flex items-center justify-between pt-1 border-t border-line/60">
+                  <span>Odometer: <strong>{(bike.current_mileage_km ?? 0).toLocaleString()} km</strong></span>
+                  <span className="text-[11px]">Due: {bike.next_service_due_km ? `${bike.next_service_due_km.toLocaleString()} km` : "3,000 km"}</span>
+                </div>
               </div>
+              <form action={async (formData) => {
+                "use server";
+                const km = Number(formData.get("mileage"));
+                if (!isNaN(km)) await updateBikeMileage(bike.id, km);
+              }} className="mt-2 flex items-center gap-1.5 text-xs">
+                <input
+                  name="mileage"
+                  type="number"
+                  defaultValue={bike.current_mileage_km ?? 0}
+                  min={0}
+                  className="w-24 px-1.5 py-0.5 border border-line rounded bg-paper text-ink text-xs"
+                  placeholder="km"
+                  aria-label="Current mileage km"
+                />
+                <button type="submit" className="text-action text-[11px]">Save km</button>
+              </form>
               {bike.status === "assigned" ? (
                 <div className="mt-3 border-t border-line pt-3 text-xs text-muted flex items-center justify-between">
                   <span>Actively assigned to driver</span>

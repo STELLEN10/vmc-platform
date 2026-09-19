@@ -7,6 +7,7 @@ export const FEATURE_CATALOG = {
   new_maintenance: { name: "Maintenance", release: "v0.3.0-beta.1", description: "Issue reports and repair workflow." },
   parts_inventory: { name: "Parts inventory", release: "v0.3.0-beta.1", description: "Parts and stock movement." },
   emergency_bike_support: { name: "Emergency support", release: "v0.3.0-beta.1", description: "Emergency motorcycle support." },
+  service_requests: { name: "Service requests", release: "v0.3.0-beta.1", description: "Scheduled and requested bike service bookings." },
   notification_system: { name: "Notifications", release: "v0.4.0-beta.1", description: "Internal notification delivery." },
   payment_reminders: { name: "Payment reminders", release: "v0.4.0-beta.1", description: "Scheduled payment reminders." },
   driver_referrals: { name: "Driver referrals", release: "v0.5.0-beta.1", description: "Referrals and R250 reward workflow." },

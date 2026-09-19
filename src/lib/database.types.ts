@@ -24,6 +24,62 @@ export type DriverOnboardingStatus =
   | "suspended";
 export type ReleaseChannel = "stable" | "beta";
 export type ReleaseStatus = "draft" | "testing" | "active" | "paused" | "rolled_back" | "retired";
+export type MaintenanceCategory =
+  | "engine"
+  | "brakes"
+  | "tyres"
+  | "electrical"
+  | "battery"
+  | "lights"
+  | "chain"
+  | "suspension"
+  | "body"
+  | "oil_service"
+  | "other";
+export type MaintenanceSeverity = "low" | "medium" | "high" | "critical";
+export type MaintenanceStatus =
+  | "submitted"
+  | "under_review"
+  | "scheduled"
+  | "in_progress"
+  | "awaiting_parts"
+  | "resolved"
+  | "cancelled";
+export type EmergencyType =
+  | "accident"
+  | "bike_breakdown"
+  | "safety_issue"
+  | "medical_emergency"
+  | "other";
+export type EmergencySeverity = "medium" | "high" | "critical";
+export type EmergencyStatus =
+  | "open"
+  | "acknowledged"
+  | "responding"
+  | "resolved"
+  | "cancelled";
+export type ServiceType =
+  | "standard_service"
+  | "first_service_1000km"
+  | "scheduled_service_3000km"
+  | "major_service_6000km"
+  | "oil_change"
+  | "brake_tyre_inspection"
+  | "other";
+export type ServiceStatus =
+  | "requested"
+  | "confirmed"
+  | "rescheduled"
+  | "completed"
+  | "cancelled"
+  | "no_show";
+export type PartStatus = "in_stock" | "low_stock" | "out_of_stock" | "discontinued";
+export type InventoryMovementType =
+  | "opening_balance"
+  | "adjustment"
+  | "received"
+  | "used"
+  | "returned";
 
 export type Database = {
   public: {
@@ -103,6 +159,8 @@ export type Database = {
           engine_number: string | null;
           licence_disc_information: string | null;
           status: BikeStatus;
+          current_mileage_km: number;
+          next_service_due_km: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -116,6 +174,8 @@ export type Database = {
           engine_number?: string | null;
           licence_disc_information?: string | null;
           status?: BikeStatus;
+          current_mileage_km?: number;
+          next_service_due_km?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -128,6 +188,8 @@ export type Database = {
           engine_number?: string | null;
           licence_disc_information?: string | null;
           status?: BikeStatus;
+          current_mileage_km?: number;
+          next_service_due_km?: number | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -528,6 +590,296 @@ export type Database = {
         Update: never;
         Relationships: [];
       };
+      parts: {
+        Row: {
+          id: string;
+          name: string;
+          sku: string | null;
+          part_number: string | null;
+          category: string;
+          description: string | null;
+          compatible_model: string | null;
+          unit_price: number | null;
+          stock_quantity: number;
+          minimum_stock_level: number;
+          supplier: string | null;
+          status: PartStatus;
+          storage_location: string | null;
+          image_storage_path: string | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          sku?: string | null;
+          part_number?: string | null;
+          category?: string;
+          description?: string | null;
+          compatible_model?: string | null;
+          unit_price?: number | null;
+          stock_quantity?: number;
+          minimum_stock_level?: number;
+          supplier?: string | null;
+          status?: PartStatus;
+          storage_location?: string | null;
+          image_storage_path?: string | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          name?: string;
+          sku?: string | null;
+          part_number?: string | null;
+          category?: string;
+          description?: string | null;
+          compatible_model?: string | null;
+          unit_price?: number | null;
+          stock_quantity?: number;
+          minimum_stock_level?: number;
+          supplier?: string | null;
+          status?: PartStatus;
+          storage_location?: string | null;
+          image_storage_path?: string | null;
+          notes?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      inventory_movements: {
+        Row: {
+          id: string;
+          part_id: string;
+          movement_type: InventoryMovementType;
+          quantity_delta: number;
+          reason: string | null;
+          performed_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          part_id: string;
+          movement_type: InventoryMovementType;
+          quantity_delta: number;
+          reason?: string | null;
+          performed_by: string;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
+      maintenance_requests: {
+        Row: {
+          id: string;
+          driver_id: string;
+          bike_id: string;
+          category: MaintenanceCategory;
+          title: string;
+          description: string;
+          severity: MaintenanceSeverity;
+          status: MaintenanceStatus;
+          management_notes: string | null;
+          submitted_at: string;
+          scheduled_for: string | null;
+          resolved_at: string | null;
+          resolved_by: string | null;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          driver_id: string;
+          bike_id: string;
+          category: MaintenanceCategory;
+          title: string;
+          description: string;
+          severity?: MaintenanceSeverity;
+          status?: MaintenanceStatus;
+          management_notes?: string | null;
+          submitted_at?: string;
+          scheduled_for?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          category?: MaintenanceCategory;
+          title?: string;
+          description?: string;
+          severity?: MaintenanceSeverity;
+          status?: MaintenanceStatus;
+          management_notes?: string | null;
+          scheduled_for?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      maintenance_attachments: {
+        Row: {
+          id: string;
+          maintenance_request_id: string;
+          storage_bucket: string;
+          storage_path: string;
+          file_name: string;
+          mime_type: string;
+          file_size_bytes: number;
+          created_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          maintenance_request_id: string;
+          storage_bucket?: string;
+          storage_path: string;
+          file_name: string;
+          mime_type: string;
+          file_size_bytes: number;
+          created_by: string;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
+      emergency_reports: {
+        Row: {
+          id: string;
+          driver_id: string;
+          bike_id: string;
+          emergency_type: EmergencyType;
+          description: string;
+          severity: EmergencySeverity;
+          location_description: string | null;
+          status: EmergencyStatus;
+          management_notes: string | null;
+          acknowledged_at: string | null;
+          acknowledged_by: string | null;
+          resolved_at: string | null;
+          resolved_by: string | null;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          driver_id: string;
+          bike_id: string;
+          emergency_type: EmergencyType;
+          description: string;
+          severity?: EmergencySeverity;
+          location_description?: string | null;
+          status?: EmergencyStatus;
+          management_notes?: string | null;
+          acknowledged_at?: string | null;
+          acknowledged_by?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          emergency_type?: EmergencyType;
+          description?: string;
+          severity?: EmergencySeverity;
+          location_description?: string | null;
+          status?: EmergencyStatus;
+          management_notes?: string | null;
+          acknowledged_at?: string | null;
+          acknowledged_by?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      emergency_attachments: {
+        Row: {
+          id: string;
+          emergency_report_id: string;
+          storage_bucket: string;
+          storage_path: string;
+          file_name: string;
+          mime_type: string;
+          file_size_bytes: number;
+          created_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          emergency_report_id: string;
+          storage_bucket?: string;
+          storage_path: string;
+          file_name: string;
+          mime_type: string;
+          file_size_bytes: number;
+          created_by: string;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
+      service_requests: {
+        Row: {
+          id: string;
+          driver_id: string;
+          bike_id: string;
+          service_type: ServiceType;
+          preferred_date: string;
+          preferred_time: string;
+          odometer_reading_km: number | null;
+          driver_notes: string | null;
+          status: ServiceStatus;
+          confirmed_date: string | null;
+          confirmed_time: string | null;
+          management_notes: string | null;
+          completed_at: string | null;
+          completed_by: string | null;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          driver_id: string;
+          bike_id: string;
+          service_type?: ServiceType;
+          preferred_date: string;
+          preferred_time: string;
+          odometer_reading_km?: number | null;
+          driver_notes?: string | null;
+          status?: ServiceStatus;
+          confirmed_date?: string | null;
+          confirmed_time?: string | null;
+          management_notes?: string | null;
+          completed_at?: string | null;
+          completed_by?: string | null;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          service_type?: ServiceType;
+          preferred_date?: string;
+          preferred_time?: string;
+          odometer_reading_km?: number | null;
+          driver_notes?: string | null;
+          status?: ServiceStatus;
+          confirmed_date?: string | null;
+          confirmed_time?: string | null;
+          management_notes?: string | null;
+          completed_at?: string | null;
+          completed_by?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -547,6 +899,33 @@ export type Database = {
           p_payment_period_id: string;
           p_status: PaymentStatus;
           p_reason?: string | null;
+        };
+        Returns: undefined;
+      };
+      transition_maintenance_request: {
+        Args: {
+          p_request_id: string;
+          p_status: string;
+          p_management_notes?: string | null;
+          p_scheduled_for?: string | null;
+        };
+        Returns: undefined;
+      };
+      transition_emergency_report: {
+        Args: {
+          p_emergency_id: string;
+          p_status: string;
+          p_management_notes?: string | null;
+        };
+        Returns: undefined;
+      };
+      transition_service_request: {
+        Args: {
+          p_request_id: string;
+          p_status: string;
+          p_confirmed_date?: string | null;
+          p_confirmed_time?: string | null;
+          p_management_notes?: string | null;
         };
         Returns: undefined;
       };
