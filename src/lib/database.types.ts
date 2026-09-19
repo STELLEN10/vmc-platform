@@ -24,6 +24,7 @@ export type DriverOnboardingStatus =
   | "suspended";
 export type ReleaseChannel = "stable" | "beta";
 export type ReleaseStatus = "draft" | "testing" | "active" | "paused" | "rolled_back" | "retired";
+export type FeatureEnvironment = "development" | "preview" | "production";
 export type MaintenanceCategory =
   | "engine"
   | "brakes"
@@ -283,8 +284,91 @@ export type Database = {
           channel?: ReleaseChannel;
           status?: ReleaseStatus;
           release_notes?: string | null;
+          created_by?: string | null;
+          activated_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
-        Update: { status?: ReleaseStatus; release_notes?: string | null };
+        Update: {
+          version?: string;
+          channel?: ReleaseChannel;
+          status?: ReleaseStatus;
+          release_notes?: string | null;
+          created_by?: string | null;
+          activated_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      release_features: {
+        Row: {
+          release_id: string;
+          feature_flag_id: string;
+          created_at: string;
+        };
+        Insert: {
+          release_id: string;
+          feature_flag_id: string;
+          created_at?: string;
+        };
+        Update: {
+          release_id?: string;
+          feature_flag_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      feature_flag_environments: {
+        Row: {
+          feature_flag_id: string;
+          environment: FeatureEnvironment;
+          enabled: boolean;
+          updated_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          feature_flag_id: string;
+          environment: FeatureEnvironment;
+          enabled?: boolean;
+          updated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          feature_flag_id?: string;
+          environment?: FeatureEnvironment;
+          enabled?: boolean;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      feature_flag_assignments: {
+        Row: {
+          id: string;
+          feature_flag_id: string;
+          profile_id: string | null;
+          role: AppRole | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          feature_flag_id: string;
+          profile_id?: string | null;
+          role?: AppRole | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          feature_flag_id?: string;
+          profile_id?: string | null;
+          role?: AppRole | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
         Relationships: [];
       };
       feature_flags: {
