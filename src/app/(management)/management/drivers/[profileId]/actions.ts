@@ -39,7 +39,12 @@ export async function reviewDriverOnboarding(formData: FormData): Promise<{ erro
   });
 
   if (error) {
-    console.error("Database error during driver review:", error);
+    console.error("Database error during driver review:", {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+    });
 
     // Map known database error messages to clear, safe user-facing feedback
     if (error.message?.includes("Only VMC management can review driver onboarding")) {

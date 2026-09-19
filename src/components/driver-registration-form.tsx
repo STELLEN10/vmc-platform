@@ -36,30 +36,35 @@ export function DriverRegistrationForm() {
     }
 
     setIsSubmitting(true);
-    const supabase = createClient();
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName, phone },
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/driver/onboarding`,
-      },
-    });
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: fullName, phone },
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/driver/onboarding`,
+        },
+      });
 
-    if (error) {
-      setMessage("We could not create that account. Please check your details or sign in if you already have an account.");
+      if (error) {
+        setMessage("We could not create that account. Please check your details or sign in if you already have an account.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!data.session) {
+        setMessage("Check your email to confirm your account, then return to sign in and continue your VMC Driver profile.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      router.replace("/driver/onboarding");
+      router.refresh();
+    } catch {
+      setMessage("Could not connect to authentication service. Please ensure Supabase credentials are configured.");
       setIsSubmitting(false);
-      return;
     }
-
-    if (!data.session) {
-      setMessage("Check your email to confirm your account, then return to sign in and continue your VMC Driver profile.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    router.replace("/driver/onboarding");
-    router.refresh();
   }
 
   return (

@@ -6,25 +6,33 @@ import { getSupabasePublicConfig } from "@/lib/env";
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
-  const { url, publishableKey } = getSupabasePublicConfig();
+  const { url, publishableKey, isConfigured } = getSupabasePublicConfig();
 
-  const supabase = createServerClient<Database>(url, publishableKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options),
-        );
-      },
-    },
-  });
+  if (!isConfigured) {
+    return response;
+  }
 
-  // Verify/refresh the session cookie. Authorization still happens in layouts and RLS.
-  await supabase.auth.getClaims();
+  try {
+    const supabase = createServerClient<Database>(url, publishableKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options),
+          );
+        },
+      },
+    });
+
+    // Verify/refresh the session cookie. Authorization still happens in layouts and RLS.
+    await supabase.auth.getClaims();
+  } catch {
+    // Suppress network or session refresh errors in development/unconfigured environments
+  }
 
   return response;
 }

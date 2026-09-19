@@ -19,17 +19,22 @@ export function LoginForm() {
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "").trim();
     const password = String(formData.get("password") ?? "");
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) {
-      setMessage("We could not sign you in with those details. Please try again.");
+      if (error) {
+        setMessage("We could not sign you in with those details. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      router.replace("/auth/complete");
+      router.refresh();
+    } catch {
+      setMessage("Could not connect to authentication service. Please ensure Supabase credentials are configured.");
       setIsSubmitting(false);
-      return;
     }
-
-    router.replace("/auth/complete");
-    router.refresh();
   }
 
   return (
