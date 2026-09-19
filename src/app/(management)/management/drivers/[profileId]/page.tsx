@@ -5,6 +5,7 @@ import { PageHeading } from "@/components/page-heading";
 import { StatusBadge } from "@/components/status-badge";
 import { requireRole } from "@/lib/auth/authorization";
 import { MANAGEMENT_ROLES } from "@/lib/auth/roles";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { AssignBikeForm } from "./assign-bike-form";
 import { ContractDocumentForm } from "./contract-document-form";
@@ -31,10 +32,15 @@ export default async function ManagementDriverReviewPage({ params }: { params: P
 
   let contractDocumentUrl: string | null = null;
   if (contracts && contracts.length > 0 && contracts[0].document_storage_path) {
-    const { data: signed } = await supabase.storage
-      .from("vmc-application-documents")
-      .createSignedUrl(contracts[0].document_storage_path, 300);
-    contractDocumentUrl = signed?.signedUrl ?? null;
+    try {
+      const adminClient = createAdminClient();
+      const { data: signed } = await adminClient.storage
+        .from("vmc-application-documents")
+        .createSignedUrl(contracts[0].document_storage_path, 300);
+      contractDocumentUrl = signed?.signedUrl || `/api/contracts/${contracts[0].id}/document`;
+    } catch {
+      contractDocumentUrl = `/api/contracts/${contracts[0].id}/document`;
+    }
   }
 
   return <>
