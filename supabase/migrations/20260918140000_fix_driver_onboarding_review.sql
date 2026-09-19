@@ -74,6 +74,12 @@ begin
   if not found then
     raise exception 'Driver onboarding record not found';
   end if;
+
+  if p_status in ('approved', 'active') then
+    insert into public.drivers (profile_id, status, start_date)
+    values (p_profile_id, 'active', current_date)
+    on conflict (profile_id) do update set status = 'active';
+  end if;
 end;
 $$;
 

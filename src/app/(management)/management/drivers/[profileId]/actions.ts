@@ -59,12 +59,46 @@ export async function reviewDriverOnboarding(formData: FormData): Promise<{ erro
     return { error: "Unable to update driver review status. Please try again." };
   }
 
+  if (status === "approved" || status === "active") {
+    try {
+      const adminClient = createAdminClient();
+      const today = new Date().toISOString().split("T")[0];
+      await adminClient.from("drivers").upsert(
+        { profile_id: profileId, status: "active", start_date: today },
+        { onConflict: "profile_id" }
+      );
+    } catch (upsertError) {
+      console.error("Could not ensure driver operational record:", upsertError);
+    }
+  }
+
   revalidatePath(`/management/drivers/${profileId}`);
   revalidatePath("/management/drivers");
   revalidatePath("/management");
   revalidatePath("/driver/onboarding");
 
   return { success: true };
+}
+
+export async function createDriverRecord(formData: FormData) {
+  await requireRole(MANAGEMENT_ROLES);
+  const profileId = String(formData.get("profileId") ?? "");
+  if (!profileId) throw new Error("Profile ID is required.");
+
+  const supabase = createAdminClient();
+  const today = new Date().toISOString().split("T")[0];
+
+  const { error } = await supabase.from("drivers").upsert(
+    { profile_id: profileId, status: "active", start_date: today },
+    { onConflict: "profile_id" }
+  );
+
+  if (error) {
+    throw new Error(`Failed to initialize driver record: ${error.message}`);
+  }
+
+  revalidatePath(`/management/drivers/${profileId}`);
+  revalidatePath("/management/drivers");
 }
 
 export async function assignBikeToDriver(formData: FormData) {
@@ -78,8 +112,20 @@ export async function assignBikeToDriver(formData: FormData) {
 
   const supabase = createAdminClient();
 
-  const { data: driver } = await supabase.from("drivers").select("id").eq("profile_id", profileId).single();
-  if (!driver) throw new Error("Driver not found");
+  let { data: driver } = await supabase.from("drivers").select("id").eq("profile_id", profileId).maybeSingle();
+  if (!driver) {
+    const today = new Date().toISOString().split("T")[0];
+    const { data: newDriver, error: insertError } = await supabase.from("drivers").insert({
+      profile_id: profileId,
+      status: "active",
+      start_date: today,
+    }).select("id").single();
+
+    if (insertError || !newDriver) {
+      throw new Error(`Could not initialize driver operational record: ${insertError?.message ?? "Unknown error"}`);
+    }
+    driver = newDriver;
+  }
 
   const today = new Date().toISOString().split("T")[0];
 
