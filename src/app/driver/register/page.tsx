@@ -21,7 +21,11 @@ export default function DriverRegistrationPage() {
           <h2>Create your account</h2>
           <p className="page-description">Your account is for driver access only. VMC verifies every onboarding submission.</p>
           <DriverRegistrationForm />
-          <p className="form-note">Already have an account? <Link href="/login">Sign in</Link></p>
+          <p className="form-note">Already registered as a driver? <Link href="/driver/login">Sign in to Driver Portal</Link></p>
+          <p className="form-note" style={{ marginTop: "0.5rem" }}>
+            VMC Operations staff? Staff accounts are invitation-only.{" "}
+            <Link href="/management/login">Go to Management Sign In →</Link>
+          </p>
         </div>
       </section>
     </main>

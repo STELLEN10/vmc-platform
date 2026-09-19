@@ -55,17 +55,18 @@ export async function requireRole(allowedRoles: readonly AppRole[]) {
   } = await supabase.auth.getUser();
 
   if (userError || !user) {
-    redirect("/login");
+    const isDriverRoute = allowedRoles.length === 1 && allowedRoles[0] === "driver";
+    redirect(isDriverRoute ? "/driver/login" : "/management/login");
   }
 
   const profile = await getProfileForUser(user.id);
 
   if (!profile) {
-    redirect("/access-denied");
+    redirect("/access-denied?reason=no_profile");
   }
 
   if (!allowedRoles.includes(profile.role)) {
-    redirect("/access-denied");
+    redirect(`/access-denied?current=${profile.role}&expected=${allowedRoles.join(",")}`);
   }
 
   return profile;

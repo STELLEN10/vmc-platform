@@ -253,10 +253,10 @@ begin
     select
       p.id,
       p.name as title,
-      'SKU: ' || p.sku || ' · ' || p.status::text || ' · Stock: ' || p.quantity_in_stock as subtitle,
+      'SKU: ' || coalesce(p.sku, p.part_number, '') || ' · ' || p.status::text || ' · Stock: ' || p.stock_quantity as subtitle,
       '/management/inventory' as url
     from public.parts p
-    where lower(p.name) like pattern or lower(p.sku) like pattern or lower(coalesce(p.category, '')) like pattern
+    where lower(p.name) like pattern or lower(coalesce(p.sku, '')) like pattern or lower(coalesce(p.part_number, '')) like pattern or lower(coalesce(p.category, '')) like pattern
     limit 5
   ) pt;
 
@@ -299,48 +299,48 @@ on conflict (key) do update set
   description = coalesce(excluded.description, public.feature_flags.description);
 
 -- Link features to releases in public.release_features
-insert into public.release_features (release_id, feature_key)
-select r.id, f.key
+insert into public.release_features (release_id, feature_flag_id)
+select r.id, f.id
 from public.releases r
-cross join (
-  values
-    ('v0_4_operations_intelligence'),
-    ('analytics_reporting'),
-    ('financial_operations'),
-    ('documents_management'),
-    ('audit_activity_log'),
-    ('global_search'),
-    ('management_settings'),
-    ('driver_dashboard_v2'),
-    ('notification_system'),
-    ('payment_reminders')
-) as f(key)
+cross join public.feature_flags f
 where r.version in ('v0.4.0', 'v0.4.0-beta.1')
-on conflict (release_id, feature_key) do nothing;
+  and f.key in (
+    'v0_4_operations_intelligence',
+    'analytics_reporting',
+    'financial_operations',
+    'documents_management',
+    'audit_activity_log',
+    'global_search',
+    'management_settings',
+    'driver_dashboard_v2',
+    'notification_system',
+    'payment_reminders'
+  )
+on conflict (release_id, feature_flag_id) do nothing;
 
 -- Enable feature flags in development and preview environments so testers can use them immediately,
 -- while keeping production guarded until activated by admin.
-insert into public.feature_flag_environments (feature_key, environment, enabled)
-values
-  ('v0_4_operations_intelligence', 'development', true),
-  ('v0_4_operations_intelligence', 'preview', true),
-  ('analytics_reporting', 'development', true),
-  ('analytics_reporting', 'preview', true),
-  ('financial_operations', 'development', true),
-  ('financial_operations', 'preview', true),
-  ('documents_management', 'development', true),
-  ('documents_management', 'preview', true),
-  ('audit_activity_log', 'development', true),
-  ('audit_activity_log', 'preview', true),
-  ('global_search', 'development', true),
-  ('global_search', 'preview', true),
-  ('management_settings', 'development', true),
-  ('management_settings', 'preview', true),
-  ('driver_dashboard_v2', 'development', true),
-  ('driver_dashboard_v2', 'preview', true),
-  ('notification_system', 'development', true),
-  ('notification_system', 'preview', true),
-  ('payment_reminders', 'development', true),
-  ('payment_reminders', 'preview', true)
-on conflict (feature_key, environment) do update set
-  enabled = excluded.enabled;
+insert into public.feature_flag_environments (feature_flag_id, environment, enabled)
+select f.id, e.environment, e.enabled
+from public.feature_flags f
+cross join (
+  values
+    ('development'::public.feature_environment, true),
+    ('preview'::public.feature_environment, true),
+    ('production'::public.feature_environment, false)
+) as e(environment, enabled)
+where f.key in (
+  'v0_4_operations_intelligence',
+  'analytics_reporting',
+  'financial_operations',
+  'documents_management',
+  'audit_activity_log',
+  'global_search',
+  'management_settings',
+  'driver_dashboard_v2',
+  'notification_system',
+  'payment_reminders'
+)
+on conflict (feature_flag_id, environment) do update set
+  enabled = excluded.enabled,
+  updated_at = now();

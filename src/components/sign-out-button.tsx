@@ -1,6 +1,8 @@
-export function SignOutButton() {
+export function SignOutButton({ redirectTo }: { redirectTo?: string }) {
+  const action = redirectTo ? `/auth/sign-out?next=${encodeURIComponent(redirectTo)}` : "/auth/sign-out";
+
   return (
-    <form action="/auth/sign-out" method="post">
+    <form action={action} method="post">
       <button className="nav-sign-out" type="submit">
         Sign out
       </button>

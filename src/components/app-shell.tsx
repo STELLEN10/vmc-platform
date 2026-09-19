@@ -132,7 +132,7 @@ export function AppShell({
         <div className="sidebar-account">
           <span className="account-name">{profile.fullName || "VMC account"}</span>
           <span className="role-chip">{profile.role}</span>
-          <SignOutButton />
+          <SignOutButton redirectTo={experience === "driver" ? "/driver/login" : "/management/login"} />
         </div>
       </aside>
 
