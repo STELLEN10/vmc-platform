@@ -3,13 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000 -H 0.0.0.0",
-    "build": "next build",
+    "dev": "NODE_OPTIONS=--use-openssl-ca next dev -p 3000 -H 0.0.0.0",
+    "build": "NODE_ENV=production next build",
     "start": "next start",
     "lint": "eslint",
     "provision:dev-test-users": "node --env-file=.env.development.local scripts/provision-dev-test-users.mjs",
     "verify:dev-driver-rls": "node --env-file=.env.development.local scripts/verify-dev-driver-rls.mjs",
     "verify:contract-pdf-security": "node scripts/verify-contract-pdf-security.mjs",
+    "verify:authenticated-flows": "NODE_OPTIONS=--use-openssl-ca node scripts/verify-authenticated-flows.mjs",
     "bootstrap:admin": "node --env-file=.env.bootstrap.local scripts/bootstrap-initial-admin.mjs"
   },
   "dependencies": {
