@@ -28,8 +28,8 @@ export async function updateSession(request: NextRequest) {
       },
     });
 
-    // Verify/refresh the session cookie. Authorization still happens in layouts and RLS.
-    await supabase.auth.getClaims();
+    // Verify and refresh the session cookie. This ensures expired tokens are properly renewed.
+    await supabase.auth.getUser();
   } catch {
     // Suppress network or session refresh errors in development/unconfigured environments
   }

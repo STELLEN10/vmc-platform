@@ -1,88 +1,59 @@
 import type { ReactNode } from "react";
 
-import { AppShell, type NavigationItem } from "@/components/app-shell";
+import { AppShell } from "@/components/app-shell";
 import { requireRole } from "@/lib/auth/authorization";
 import { MANAGEMENT_ROLES } from "@/lib/auth/roles";
-import { createClient } from "@/lib/supabase/server";
+import { getManagementBadgeCounts } from "@/lib/notifications/server";
 
 export default async function ManagementLayout({ children }: { children: ReactNode }) {
   const profile = await requireRole(MANAGEMENT_ROLES);
-  const supabase = await createClient();
+  const badges = await getManagementBadgeCounts();
 
-  // Query live operational counters for navigation badges
-  const [
-    { count: unreadNotifications },
-    { count: activeEmergencies },
-    { count: openMaintenance },
-    { count: pendingServices },
-  ] = await Promise.all([
-    supabase
-      .from("management_notifications")
-      .select("*", { count: "exact", head: true })
-      .is("read_at", null),
-    supabase
-      .from("emergency_reports")
-      .select("*", { count: "exact", head: true })
-      .in("status", ["open", "responding", "acknowledged"]),
-    supabase
-      .from("maintenance_requests")
-      .select("*", { count: "exact", head: true })
-      .in("status", ["submitted", "under_review", "in_progress", "scheduled"]),
-    supabase
-      .from("service_requests")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "requested"),
-  ]);
-
-  const managementNavigation: NavigationItem[] = [
+  const baseNavigation = [
     { href: "/management", label: "Dashboard" },
+    {
+      href: "/management/notifications",
+      label: "Alerts",
+      badge: badges.unreadNotifications,
+    },
     { href: "/management/drivers", label: "Drivers" },
     { href: "/management/bikes", label: "Bikes" },
     {
-      href: "/management/emergency",
-      label: "Emergency",
-      badge: activeEmergencies || null,
-      badgeTone: "red",
+      href: "/management/finance",
+      label: "Finance",
+      badge: badges.pendingPayments,
     },
     {
       href: "/management/maintenance",
       label: "Maintenance",
-      badge: openMaintenance || null,
-      badgeTone: "amber",
+      badge: badges.openMaintenance,
     },
     {
-      href: "/management/services",
-      label: "Services",
-      badge: pendingServices || null,
-      badgeTone: "blue",
+      href: "/management/inventory",
+      label: "Inventory",
+      badge: badges.lowStockParts,
     },
-    { href: "/management/inventory", label: "Inventory" },
-    { href: "/management/payments", label: "Payments" },
-    { href: "/management/analytics", label: "Analytics" },
+    {
+      href: "/management/emergency",
+      label: "Emergency",
+      badge: badges.unresolvedEmergencies,
+    },
+    { href: "/management/services", label: "Services" },
     { href: "/management/documents", label: "Documents" },
-    { href: "/management/activity", label: "Activity audit" },
-    {
-      href: "/management/notifications",
-      label: "Notifications",
-      badge: unreadNotifications || null,
-      badgeTone: "red",
-    },
+    { href: "/management/analytics", label: "Analytics" },
+    { href: "/management/activity", label: "Activity" },
     { href: "/management/releases", label: "Release control" },
-    ...(profile.role === "admin"
-      ? [{ href: "/management/team", label: "Team access" }]
-      : []),
+    { href: "/management/team", label: "Team access" },
     { href: "/management/settings", label: "Settings" },
   ];
 
+  const navigation = profile.role === "admin"
+    ? baseNavigation
+    : baseNavigation.filter((item) => item.href !== "/management/team");
+
   return (
-    <AppShell
-      area="VMC Management"
-      navigation={managementNavigation}
-      profile={profile}
-      unreadNotificationsCount={unreadNotifications ?? 0}
-    >
+    <AppShell area="VMC Management" navigation={navigation} profile={profile}>
       {children}
     </AppShell>
   );
 }
-

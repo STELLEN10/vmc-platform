@@ -1,54 +1,58 @@
-import { PageHeading } from "@/components/page-heading";
 import { requireRole } from "@/lib/auth/authorization";
 import { MANAGEMENT_ROLES } from "@/lib/auth/roles";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { ActivityView } from "./activity-view";
+import { createClient } from "@/lib/supabase/server";
+import { ActivityView, type AuditLogItem } from "./activity-view";
 
 export default async function ManagementActivityPage() {
   await requireRole(MANAGEMENT_ROLES);
-  const supabase = createAdminClient();
+  const supabase = await createClient();
 
-  const [
-    { data: auditLogs },
-    { data: recentEmergencies },
-    { data: recentMaintenance },
-    { data: recentPayments },
-  ] = await Promise.all([
-    supabase
-      .from("audit_logs")
-      .select("id, actor_id, action, entity_type, entity_id, old_values, new_values, metadata, created_at")
-      .order("created_at", { ascending: false })
-      .limit(50),
-    supabase
-      .from("emergency_reports")
-      .select("id, emergency_type, severity, status, created_at, resolved_at")
-      .order("created_at", { ascending: false })
-      .limit(20),
-    supabase
-      .from("maintenance_requests")
-      .select("id, title, category, severity, status, created_at, resolved_at")
-      .order("created_at", { ascending: false })
-      .limit(20),
-    supabase
-      .from("payments")
-      .select("id, amount, status, payment_type, created_at, paid_at")
-      .order("created_at", { ascending: false })
-      .limit(20),
-  ]);
+  const { data: rawLogs } = await supabase
+    .from("audit_logs")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  // Fetch unique actors to populate actor names and roles
+  const actorIds = Array.from(
+    new Set((rawLogs ?? []).map((l) => l.actor_id).filter(Boolean))
+  ) as string[];
+
+  const { data: profiles } = actorIds.length > 0
+    ? await supabase.from("profiles").select("id, full_name, role").in("id", actorIds)
+    : { data: [] };
+
+  const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
+
+  const logs: AuditLogItem[] = (rawLogs ?? []).map((l) => {
+    const prof = l.actor_id ? profileMap.get(l.actor_id) : null;
+    return {
+      id: l.id,
+      actorId: l.actor_id,
+      actorName: prof?.full_name || (l.actor_id ? "Operations Staff" : "System Service"),
+      actorRole: prof?.role || "system",
+      action: l.action,
+      entityType: l.entity_type,
+      entityId: l.entity_id,
+      oldValues: (l.old_values as Record<string, unknown>) || null,
+      newValues: (l.new_values as Record<string, unknown>) || null,
+      metadata: (l.metadata as Record<string, unknown>) || {},
+      createdAt: l.created_at,
+    };
+  });
 
   return (
     <div className="space-y-6">
-      <PageHeading
-        eyebrow="OPERATIONS INTELLIGENCE"
-        title="Audit Trail & Operations Activity"
-        description="Immutable operational timeline tracking entity modifications, safety dispatches, payment reconciliations, and staff decisions."
-      />
-      <ActivityView
-        auditLogs={auditLogs ?? []}
-        emergencies={recentEmergencies ?? []}
-        maintenance={recentMaintenance ?? []}
-        payments={recentPayments ?? []}
-      />
+      <div>
+        <h1 className="text-2xl font-bold text-neutral-900 tracking-tight">
+          Global Operations Activity & Audit
+        </h1>
+        <p className="mt-1 text-sm text-neutral-500">
+          Tamper-evident system activity log capturing payment reviews, maintenance transitions, release activations, and emergency events.
+        </p>
+      </div>
+
+      <ActivityView logs={logs} />
     </div>
   );
 }

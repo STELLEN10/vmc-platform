@@ -1,3 +1,11 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
 export type AppRole = "admin" | "staff" | "driver";
 export type DriverStatus = "active" | "inactive" | "suspended";
 export type BikeStatus = "available" | "assigned" | "maintenance" | "inactive" | "repair" | "retired";
@@ -91,7 +99,6 @@ export type Database = {
           full_name: string;
           email: string | null;
           phone: string | null;
-          phone_number: string | null;
           role: AppRole;
           created_at: string;
           updated_at: string;
@@ -101,7 +108,6 @@ export type Database = {
           full_name?: string;
           email?: string | null;
           phone?: string | null;
-          phone_number?: string | null;
           role?: AppRole;
           created_at?: string;
           updated_at?: string;
@@ -110,7 +116,6 @@ export type Database = {
           full_name?: string;
           email?: string | null;
           phone?: string | null;
-          phone_number?: string | null;
           role?: AppRole;
           updated_at?: string;
         };
@@ -258,79 +263,48 @@ export type Database = {
         Row: {
           id: string;
           type: string;
-          driver_profile_id: string;
+          driver_profile_id: string | null;
           title: string;
           body: string;
+          is_read: boolean;
           created_at: string;
           read_at: string | null;
           read_by: string | null;
-          related_entity_type?: string | null;
-          related_entity_id?: string | null;
-          action_url?: string | null;
-          severity?: string | null;
-        };
-        Insert: {
-          id?: string;
-          type?: string;
-          driver_profile_id: string;
-          title: string;
-          body: string;
-          created_at?: string;
-          read_at?: string | null;
-          read_by?: string | null;
-          related_entity_type?: string | null;
-          related_entity_id?: string | null;
-          action_url?: string | null;
-          severity?: string | null;
-        };
-        Update: {
-          read_at?: string | null;
-          read_by?: string | null;
-          action_url?: string | null;
-          severity?: string | null;
-        };
-        Relationships: [];
-      };
-      notifications: {
-        Row: {
-          id: string;
-          recipient_profile_id: string;
-          channel: "in_app" | "sms" | "email" | "whatsapp" | "push";
-          type: string;
-          title: string;
-          body: string;
-          status: "unread" | "read" | "archived";
+          severity: string | null;
+          action_url: string | null;
           related_entity_type: string | null;
           related_entity_id: string | null;
-          action_url: string | null;
-          read_at: string | null;
-          created_at: string;
         };
         Insert: {
           id?: string;
-          recipient_profile_id: string;
-          channel?: "in_app" | "sms" | "email" | "whatsapp" | "push";
           type: string;
+          driver_profile_id?: string | null;
           title: string;
           body: string;
-          status?: "unread" | "read" | "archived";
+          is_read?: boolean;
+          created_at?: string;
+          read_at?: string | null;
+          read_by?: string | null;
+          severity?: string | null;
+          action_url?: string | null;
           related_entity_type?: string | null;
           related_entity_id?: string | null;
-          action_url?: string | null;
-          read_at?: string | null;
-          created_at?: string;
         };
         Update: {
-          status?: "unread" | "read" | "archived";
+          is_read?: boolean;
           read_at?: string | null;
+          read_by?: string | null;
+          severity?: string | null;
           action_url?: string | null;
+          related_entity_type?: string | null;
+          related_entity_id?: string | null;
         };
         Relationships: [];
       };
       system_settings: {
         Row: {
           key: string;
-          value: unknown;
+          value: Json;
           category: string;
           description: string | null;
           updated_by: string | null;
@@ -338,16 +312,131 @@ export type Database = {
         };
         Insert: {
           key: string;
-          value: unknown;
+          value: Json;
           category?: string;
           description?: string | null;
           updated_by?: string | null;
           updated_at?: string;
         };
         Update: {
-          value?: unknown;
+          key?: string;
+          value?: Json;
           category?: string;
           description?: string | null;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      notifications: {
+        Row: {
+          id: string;
+          recipient_profile_id: string;
+          channel: "in_app" | "whatsapp" | "email" | "sms" | "push";
+          type: string;
+          title: string;
+          body: string;
+          status: "unread" | "read" | "archived";
+          related_entity_type: string | null;
+          related_entity_id: string | null;
+          created_at: string;
+          updated_at: string;
+          read_at?: string | null;
+        };
+        Insert: {
+          id?: string;
+          recipient_profile_id: string;
+          channel?: "in_app" | "whatsapp" | "email" | "sms" | "push";
+          type: string;
+          title: string;
+          body: string;
+          status?: "unread" | "read" | "archived";
+          related_entity_type?: string | null;
+          related_entity_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          read_at?: string | null;
+        };
+        Update: {
+          status?: "unread" | "read" | "archived";
+          updated_at?: string;
+          read_at?: string | null;
+        };
+        Relationships: [];
+      };
+      notification_deliveries: {
+        Row: {
+          id: string;
+          notification_id: string;
+          channel: string;
+          status: "scheduled" | "sent" | "failed" | "cancelled";
+          scheduled_for: string;
+          sent_at: string | null;
+          failed_at: string | null;
+          error_message: string | null;
+          metadata: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          notification_id: string;
+          channel: string;
+          status?: "scheduled" | "sent" | "failed" | "cancelled";
+          scheduled_for?: string;
+          sent_at?: string | null;
+          failed_at?: string | null;
+          error_message?: string | null;
+          metadata?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          status?: "scheduled" | "sent" | "failed" | "cancelled";
+          sent_at?: string | null;
+          failed_at?: string | null;
+          error_message?: string | null;
+          metadata?: Json;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      business_settings: {
+        Row: {
+          id: string;
+          business_timezone: string;
+          service_interval_km: number;
+          free_service_allowance: number;
+          low_stock_threshold: number;
+          emergency_standby_phone: string;
+          emergency_standby_hours: string;
+          payment_grace_period_days: number;
+          auto_reminders_enabled: boolean;
+          updated_by: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          business_timezone?: string;
+          service_interval_km?: number;
+          free_service_allowance?: number;
+          low_stock_threshold?: number;
+          emergency_standby_phone?: string;
+          emergency_standby_hours?: string;
+          payment_grace_period_days?: number;
+          auto_reminders_enabled?: boolean;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          business_timezone?: string;
+          service_interval_km?: number;
+          free_service_allowance?: number;
+          low_stock_threshold?: number;
+          emergency_standby_phone?: string;
+          emergency_standby_hours?: string;
+          payment_grace_period_days?: number;
+          auto_reminders_enabled?: boolean;
           updated_by?: string | null;
           updated_at?: string;
         };
@@ -478,9 +567,9 @@ export type Database = {
           action: string;
           entity_type: string;
           entity_id: string | null;
-          old_values: Record<string, unknown> | null;
-          new_values: Record<string, unknown> | null;
-          metadata: Record<string, unknown>;
+          old_values: Json | null;
+          new_values: Json | null;
+          metadata: Json;
           created_at: string;
         };
         Insert: {
@@ -489,9 +578,9 @@ export type Database = {
           action: string;
           entity_type: string;
           entity_id?: string | null;
-          old_values?: Record<string, unknown> | null;
-          new_values?: Record<string, unknown> | null;
-          metadata?: Record<string, unknown>;
+          old_values?: Json | null;
+          new_values?: Json | null;
+          metadata?: Json;
         };
         Update: never;
         Relationships: [];
@@ -1132,24 +1221,54 @@ export type Database = {
         Args: { p_key: string; p_profile_id?: string | null; p_role?: AppRole | null };
         Returns: undefined;
       };
-      mark_notification_read: {
-        Args: { p_notification_id: string; p_is_read?: boolean };
+      mark_notification_as_read: {
+        Args: { p_notification_id: string };
         Returns: undefined;
       };
-      mark_all_notifications_read: {
+      mark_all_notifications_as_read: {
         Args: Record<string, never>;
+        Returns: number;
+      };
+      mark_management_notification_as_read: {
+        Args: { p_notification_id: string };
         Returns: undefined;
       };
-      search_global: {
-        Args: { p_query: string };
+      mark_all_management_notifications_as_read: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
+      dispatch_payment_reminders: {
+        Args: Record<string, never>;
         Returns: {
-          drivers: Array<{ id: string; title: string; subtitle: string; role: string; url: string }>;
-          bikes: Array<{ id: string; title: string; subtitle: string; url: string }>;
-          contracts: Array<{ id: string; title: string; subtitle: string; url: string }>;
-          maintenance: Array<{ id: string; title: string; subtitle: string; url: string }>;
-          emergencies: Array<{ id: string; title: string; subtitle: string; url: string }>;
-          parts: Array<{ id: string; title: string; subtitle: string; url: string }>;
+          processed_count: number;
+          upcoming_count: number;
+          due_count: number;
+          overdue_count: number;
+        }[];
+      };
+      log_audit_event: {
+        Args: {
+          p_action: string;
+          p_entity_type: string;
+          p_entity_id?: string | null;
+          p_old_values?: Json | null;
+          p_new_values?: Json | null;
+          p_metadata?: Json;
         };
+        Returns: string;
+      };
+      update_business_settings: {
+        Args: {
+          p_business_timezone: string;
+          p_service_interval_km: number;
+          p_free_service_allowance: number;
+          p_low_stock_threshold: number;
+          p_emergency_standby_phone: string;
+          p_emergency_standby_hours: string;
+          p_payment_grace_period_days: number;
+          p_auto_reminders_enabled: boolean;
+        };
+        Returns: undefined;
       };
     };
     Enums: {

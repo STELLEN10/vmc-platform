@@ -359,6 +359,111 @@ export async function quickActivateV03Suite() {
   releaseSuccess();
 }
 
+export async function quickActivateV04Suite() {
+  await requireRole(ADMIN_ROLES);
+  const supabase = await createClient();
+
+  const v04Keys: FeatureKey[] = [
+    "notification_system",
+    "payment_reminders",
+    "operations_analytics",
+    "management_documents",
+    "global_activity_audit",
+  ];
+
+  // 1. Ensure v0.4.0 and v0.4.0-beta.1 releases exist and are active
+  const versions = ["v0.4.0", "v0.4.0-beta.1"];
+  const releaseIds: string[] = [];
+
+  for (const ver of versions) {
+    const { data: existing } = await supabase
+      .from("releases")
+      .select("id")
+      .eq("version", ver)
+      .maybeSingle();
+
+    if (existing) {
+      await supabase
+        .from("releases")
+        .update({
+          status: "active",
+          activated_at: new Date().toISOString(),
+        })
+        .eq("id", existing.id);
+      releaseIds.push(existing.id);
+    } else {
+      const { data: inserted } = await supabase
+        .from("releases")
+        .insert({
+          version: ver,
+          channel: ver.includes("beta") ? "beta" : "stable",
+          status: "active",
+          release_notes: "Operations intelligence: notifications, payment reminders, analytics, documents vault, unified audit.",
+          activated_at: new Date().toISOString(),
+        })
+        .select("id")
+        .single();
+      if (inserted) releaseIds.push(inserted.id);
+    }
+  }
+
+  // 2. Ensure all v0.4 flags exist and are enabled in feature_flags
+  const flagIds: string[] = [];
+  for (const key of v04Keys) {
+    const item = FEATURE_CATALOG[key];
+    const { data: existing } = await supabase
+      .from("feature_flags")
+      .select("id")
+      .eq("key", key)
+      .maybeSingle();
+
+    if (existing) {
+      await supabase
+        .from("feature_flags")
+        .update({ enabled: true })
+        .eq("id", existing.id);
+      flagIds.push(existing.id);
+    } else {
+      const { data: inserted } = await supabase
+        .from("feature_flags")
+        .insert({
+          key,
+          enabled: true,
+          description: item.description,
+        })
+        .select("id")
+        .single();
+      if (inserted) flagIds.push(inserted.id);
+    }
+  }
+
+  // 3. Sync environments
+  const envs = ["development", "preview", "production"] as const;
+  for (const fId of flagIds) {
+    await supabase.from("feature_flag_environments").upsert(
+      envs.map((env) => ({
+        feature_flag_id: fId,
+        environment: env,
+        enabled: true,
+      })),
+      { onConflict: "feature_flag_id,environment" }
+    );
+  }
+
+  // 4. Link release_features
+  for (const rId of releaseIds) {
+    await supabase.from("release_features").upsert(
+      flagIds.map((fId) => ({
+        release_id: rId,
+        feature_flag_id: fId,
+      })),
+      { onConflict: "release_id,feature_flag_id" }
+    );
+  }
+
+  releaseSuccess();
+}
+
 export async function assignBetaTester(formData: FormData) {
   await requireRole(ADMIN_ROLES);
   const key = String(formData.get("key") ?? "").trim();

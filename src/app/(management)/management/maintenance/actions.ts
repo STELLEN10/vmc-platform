@@ -24,7 +24,7 @@ export async function updateMaintenanceStatus(
   const { error } = await supabase.rpc("transition_maintenance_request", {
     p_request_id: requestId,
     p_status: newStatus,
-    p_notes: managementNotes || null,
+    p_management_notes: managementNotes || null,
     p_scheduled_for: scheduledFor || null,
   });
 
