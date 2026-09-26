@@ -429,7 +429,7 @@ export async function uploadContractPdf(
 
 
 export async function deleteContractPdf(formData: FormData) {
-  const profile = await requireRole(MANAGEMENT_ROLES);
+  await requireRole(MANAGEMENT_ROLES);
   const profileId = String(formData.get("profileId") ?? "").trim();
   const contractId = String(formData.get("contractId") ?? "").trim();
 
