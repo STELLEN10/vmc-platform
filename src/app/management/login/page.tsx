@@ -1,13 +1,15 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+
 import { BrandMark } from "@/components/brand-mark";
 import { ManagementLoginForm } from "@/components/management-login-form";
 
-type ManagementLoginPageProps = {
-  searchParams: Promise<{ invited?: string; error?: string }>;
+export const metadata: Metadata = {
+  title: "Management Sign In | Valhalla Motorcycles",
+  description: "Sign into the Valhalla Motorcycles Management Console.",
 };
 
-export default async function ManagementLoginPage({ searchParams }: ManagementLoginPageProps) {
-  const { invited, error } = await searchParams;
-
+export default function ManagementLoginPage() {
   return (
     <main className="auth-page">
       <section className="auth-brand-panel">
@@ -21,6 +23,7 @@ export default async function ManagementLoginPage({ searchParams }: ManagementLo
         </div>
         <p className="auth-brand-panel__note">VMC · Pretoria–Midrand Hub</p>
       </section>
+
       <section className="auth-form-panel">
         <div className="auth-form-wrap">
           <p className="eyebrow">MANAGEMENT CONSOLE</p>
@@ -28,23 +31,15 @@ export default async function ManagementLoginPage({ searchParams }: ManagementLo
           <p className="page-description">
             Access is restricted to authorized VMC personnel. Staff accounts are created by administrator invitation only.
           </p>
-
-          {invited === "1" && (
-            <p className="form-message form-message--success">
-              Your password has been successfully established! Please sign in with your email and new password.
-            </p>
-          )}
-
-          {error === "management_required" && (
-            <p className="form-message form-message--error">
-              You must sign in with a verified VMC Staff or Admin account to access Management.
-            </p>
-          )}
-
           <ManagementLoginForm />
-
           <p className="form-note" style={{ marginTop: "1rem" }}>
             Need team access? Ask a VMC administrator to send an invitation to your work email.
+          </p>
+          <p className="form-note" style={{ marginTop: "0.5rem" }}>
+            Have an invitation token?{" "}
+            <Link href="/management/set-password" className="text-action">
+              Set up invited account →
+            </Link>
           </p>
         </div>
       </section>
