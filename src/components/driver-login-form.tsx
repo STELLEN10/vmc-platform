@@ -118,15 +118,6 @@ export function DriverLoginForm() {
           Create driver account
         </Link>
       </div>
-
-      <div style={{ marginTop: "1.25rem", paddingTop: "1rem", borderTop: "1px solid #e7ecf0", textAlign: "center" }}>
-        <p className="form-note" style={{ margin: 0 }}>
-          Are you a VMC staff member or supervisor?{" "}
-          <Link href="/management/login" className="text-action" style={{ fontWeight: 700 }}>
-            Sign into Management Portal →
-          </Link>
-        </p>
-      </div>
     </form>
   );
 }

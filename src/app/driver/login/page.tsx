@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { BrandMark } from "@/components/brand-mark";
 import { DriverLoginForm } from "@/components/driver-login-form";

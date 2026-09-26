@@ -29,7 +29,18 @@ export const metadata: Metadata = {
     title: "VMC Platform",
   },
   icons: {
-    apple: "/vmc-logo.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "32x32" },
+      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/icon-512.png", type: "image/png", sizes: "512x512" },
+      { url: "/vmc-logo.png", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/vmc-logo.png" },
+    ],
   },
 };
 
