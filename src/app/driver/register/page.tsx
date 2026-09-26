@@ -9,23 +9,19 @@ export default function DriverRegistrationPage() {
       <section className="driver-auth-page__hero">
         <BrandMark href="/" />
         <div>
-          <p className="eyebrow eyebrow--light">VMC DRIVER · HERO RIDER NETWORK</p>
-          <h1>Start your VMC journey.</h1>
-          <p>Create your VMC Driver account, complete your profile and submit it for team review.</p>
+          <p className="eyebrow eyebrow--light">ROAD TO OWNERSHIP · VMC DRIVER</p>
+          <h1>Create your driver account.</h1>
+          <p>Create your VMC Driver account and continue with your rider onboarding.</p>
         </div>
-        <p className="driver-auth-page__footer">Valhalla Motorcycles · Pretoria–Midrand</p>
+        <p className="driver-auth-page__footer">VMC · Pretoria–Midrand · <a href="tel:+27766681879">+27 76 668 1879</a></p>
       </section>
       <section className="driver-auth-page__form">
         <div className="auth-form-wrap">
           <p className="eyebrow driver-eyebrow">VMC DRIVER</p>
           <h2>Create your account</h2>
-          <p className="page-description">Your account is for driver access only. VMC verifies every onboarding submission.</p>
+          <p className="page-description">Driver access only. VMC reviews every onboarding submission.</p>
           <DriverRegistrationForm />
           <p className="form-note">Already registered as a driver? <Link href="/driver/login">Sign in to Driver Portal</Link></p>
-          <p className="form-note" style={{ marginTop: "0.5rem" }}>
-            VMC Operations staff? Staff accounts are invitation-only.{" "}
-            <Link href="/management/login">Go to Management Sign In →</Link>
-          </p>
         </div>
       </section>
     </main>
