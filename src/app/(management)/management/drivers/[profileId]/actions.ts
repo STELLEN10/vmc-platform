@@ -7,6 +7,7 @@ import { MANAGEMENT_ROLES } from "@/lib/auth/roles";
 import type { DriverOnboardingStatus } from "@/lib/database.types";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { recordAuditEvent } from "@/lib/audit/server";
 
 const managementStatuses: DriverOnboardingStatus[] = [
   "under_review", "approved", "active", "changes_requested", "rejected", "suspended",
@@ -468,6 +469,13 @@ export async function deleteContractPdf(formData: FormData) {
   if (updateError) {
     throw new Error("The contract file was removed from storage, but its database reference could not be cleared.");
   }
+
+  await recordAuditEvent({
+    action: "contract_pdf_removed",
+    entityType: "contract",
+    entityId: contractId,
+    metadata: { profileId },
+  });
 
   revalidatePath(`/management/drivers/${profileId}`);
   revalidatePath("/management/documents");
