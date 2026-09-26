@@ -57,7 +57,7 @@ button { cursor: pointer; }
 .landing-hero__bike { border-radius: .85rem; }
 
 /* Compact application shell and operator controls. */
-.app-sidebar { width: 13.5rem; padding: 1rem .7rem .75rem; transition: width 180ms ease, transform 180ms ease; }
+.app-sidebar { width: 13.5rem; padding: 1rem .7rem .75rem; transition: width 180ms ease, transform 180ms ease; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgb(255 255 255 / .2) transparent; }
 .sidebar-brand-row { display: flex; align-items: center; justify-content: space-between; min-height: 3.3rem; }
 .app-sidebar .brand-mark { margin-left: 0; }.app-sidebar .brand-mark__logo { width: 8.4rem; }.app-sidebar .brand-mark__logo--compact { width: 2.65rem; height: 2.2rem; }
 .shell-icon-button { display: inline-grid; width: 2rem; height: 2rem; flex: none; place-items: center; border: 1px solid rgb(255 255 255 / .2); border-radius: .35rem; padding: 0; background: rgb(0 0 0 / .15); color: currentColor; }
@@ -73,3 +73,11 @@ button { cursor: pointer; }
 .section-gap { margin-top: 1rem; }.release-admin-grid + .section-gap { margin-top: 1.25rem; }.account-security-card { max-width: 42rem; }.account-security-card h2 { margin: 0; color: var(--navy); font-size: 1.2rem; }.account-security-card .button { margin-top: .85rem; }
 .settings-grid { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }.settings-grid .review-form { display: grid; gap: .7rem; }.settings-grid h2 { margin: 0; color: var(--navy); font-size: 1.15rem; }.settings-message { grid-column: 1 / -1; }.theme-dark .settings-grid h2 { color: #f3f8fb; }@media (max-width: 760px) { .settings-grid { grid-template-columns: 1fr; } }
 @media (max-width: 760px) { .app-sidebar { display: flex; width: min(17rem, 84vw); transform: translateX(-102%); }.app-shell--mobile-open .app-sidebar { transform: translateX(0); }.mobile-app-header { position: sticky; top: 0; z-index: 15; }.mobile-app-header .brand-mark__logo--compact { width: 2.8rem; height: 2.35rem; }.mobile-app-header .theme-switch { color: white; }.mobile-app-header .shell-icon-button { color: white; }.app-main, .app-shell--collapsed .app-main { margin-left: 0; padding: 1rem; }.shell-utility-bar { display: none; }.sidebar-collapse-button { display: none; }.app-shell--collapsed .app-sidebar { width: min(17rem, 84vw); }.app-shell--collapsed .app-area, .app-shell--collapsed .nav-label, .app-shell--collapsed .sidebar-account { display: grid; }.app-shell--collapsed .app-navigation a { justify-content: flex-start; padding: .58rem .65rem; } }
+
+/* Long navigation remains usable on smaller laptop screens. */
+.app-sidebar::-webkit-scrollbar { width: 6px; }
+.app-sidebar::-webkit-scrollbar-track { background: transparent; }
+.app-sidebar::-webkit-scrollbar-thumb { border-radius: 99px; background: rgb(255 255 255 / .2); }
+.landing-support { margin: 1.2rem 0 0 !important; color: #b7d1e2 !important; font-size: .82rem !important; }
+.landing-support a { color: white; font-weight: 800; text-decoration: underline; text-underline-offset: 2px; }
+.driver-auth-page__footer a, .auth-brand-panel__note a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
