@@ -15,29 +15,21 @@ export default function DriverLoginPage() {
       <section className="driver-auth-page__hero">
         <BrandMark href="/" />
         <div>
-          <p className="eyebrow eyebrow--light">VMC DRIVER · HERO RIDER NETWORK</p>
-          <h1>Driver Portal Sign In</h1>
+          <p className="eyebrow eyebrow--light">ROAD TO OWNERSHIP · VMC DRIVER</p>
+          <h1>Driver Sign In</h1>
           <p>
-            Access your assigned HERO Eco 150 motorcycle, view contract balance, request service bookings, and record weekly payments.
+            Sign in to view your motorcycle, payments, service requests, and VMC notices.
           </p>
         </div>
-        <p className="driver-auth-page__footer">Valhalla Motorcycles · Pretoria–Midrand</p>
+        <p className="driver-auth-page__footer">VMC · Pretoria–Midrand · <a href="tel:+27766681879">+27 76 668 1879</a></p>
       </section>
 
       <section className="driver-auth-page__form">
         <div className="auth-form-wrap">
           <p className="eyebrow driver-eyebrow">DELIVERY RIDER ACCESS</p>
           <h2>Sign into your bike</h2>
-          <p className="page-description">
-            Sign in with your registered driver email and password. This portal is strictly for active delivery riders.
-          </p>
+          <p className="page-description">Use the email and password registered for your VMC Driver account.</p>
           <DriverLoginForm />
-          <p className="form-note" style={{ marginTop: "1rem" }}>
-            New to Valhalla Motorcycles?{" "}
-            <Link href="/driver/register" className="text-action">
-              Apply to become a driver
-            </Link>
-          </p>
         </div>
       </section>
     </main>

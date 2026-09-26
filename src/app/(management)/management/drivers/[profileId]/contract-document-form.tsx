@@ -7,6 +7,7 @@ import {
   prepareContractPdfUpload,
   finalizeContractPdfUpload,
   uploadContractPdf,
+  deleteContractPdf,
 } from "./actions";
 
 interface ContractDocumentFormProps {
@@ -32,9 +33,31 @@ export function ContractDocumentForm({
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const hasDocument = Boolean(documentStoragePath);
   const documentLink = viewUrl || `/api/contracts/${contractId}/document`;
+
+  async function handleDelete() {
+    if (!hasDocument || isDeleting) return;
+    if (!window.confirm("Remove this contract PDF from VMC records? The contract itself will remain active.")) return;
+
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    setIsDeleting(true);
+    try {
+      const formData = new FormData();
+      formData.append("profileId", profileId);
+      formData.append("contractId", contractId);
+      await deleteContractPdf(formData);
+      setSuccessMessage("Contract PDF removed.");
+      router.refresh();
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "Could not remove the contract PDF.");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
 
   async function handleFormSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -186,6 +209,14 @@ export function ContractDocumentForm({
                 className="button button--secondary py-1 px-3 text-xs"
               >
                 {showUploadForm ? "Cancel" : "Replace"}
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="button button--secondary py-1 px-3 text-xs"
+              >
+                {isDeleting ? "Removing…" : "Remove PDF"}
               </button>
             </div>
           </div>

@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get("code");
   const tokenHash = requestUrl.searchParams.get("token_hash");
   const type = requestUrl.searchParams.get("type") as EmailOtpType | null;
-  const next = safeInternalPath(requestUrl.searchParams.get("next")) ?? "/management/set-password";
+  const next = safeInternalPath(requestUrl.searchParams.get("next")) ?? "/management/login";
 
   // 1. PKCE flow code exchange
   if (code) {
