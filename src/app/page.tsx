@@ -8,46 +8,36 @@ export default function Home() {
     <main className="landing-page">
       <header className="landing-header content-width">
         <BrandMark />
-        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-          <Link className="text-link" href="/driver/login">
-            Driver Sign In
-          </Link>
-          <Link
-            className="text-link"
-            href="/management/login"
-            style={{ fontWeight: 600, color: "white", background: "rgba(255,255,255,0.12)", padding: "0.35rem 0.8rem", borderRadius: "0.35rem" }}
-          >
-            Management Portal
-          </Link>
-        </div>
+        <Link className="text-link" href="/driver/login">
+          Driver Sign In
+        </Link>
       </header>
 
       <section className="landing-hero content-width">
         <div className="landing-hero__copy">
           <p className="eyebrow eyebrow--light">PRETORIA · MIDRAND</p>
-          <h1>Built for the road ahead.</h1>
+          <h1>Road to Ownership.</h1>
           <p>
-            The dedicated operating platform for Valhalla Motorcycles and its HERO delivery-rider fleet.
+            The dedicated VMC platform for HERO delivery riders — built to keep your motorcycle, payments, service, and important notices in one place.
           </p>
 
           <div style={{ display: "flex", gap: "0.85rem", flexWrap: "wrap", marginTop: "1.5rem" }}>
             <Link className="button button--light" href="/driver/login">
-              Driver Portal
+              Driver Sign In
             </Link>
             <Link
               className="button"
-              href="/management/login"
-              style={{ background: "#0b2545", color: "#ffffff", border: "1px solid rgba(255,255,255,0.2)" }}
+              href="/driver/register"
+              style={{ background: "#191919", color: "#ffffff", border: "1px solid rgba(255,255,255,0.2)" }}
             >
-              Management Console
+              Driver Sign Up
             </Link>
           </div>
 
-          <div style={{ marginTop: "1rem" }}>
-            <Link href="/driver/register" className="text-link" style={{ fontSize: "0.85rem", color: "#cbd5e1" }}>
-              New rider? Apply to become a VMC delivery driver →
-            </Link>
-          </div>
+          <p className="landing-support">
+            Need help? VMC:{" "}
+            <a href="tel:+27766681879">+27 76 668 1879</a>
+          </p>
         </div>
 
         <div className="landing-hero__bike">
@@ -64,7 +54,7 @@ export default function Home() {
 
       <footer className="landing-footer content-width">
         <span>VMC Platform</span>
-        <span>Dedicated portals for delivery drivers and operations management</span>
+        <span>Dedicated platform for HERO delivery riders</span>
       </footer>
     </main>
   );
