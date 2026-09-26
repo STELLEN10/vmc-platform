@@ -426,3 +426,49 @@ export async function uploadContractPdf(
     return { error: err instanceof Error ? err.message : "An unexpected error occurred while processing the contract PDF." };
   }
 }
+
+
+export async function deleteContractPdf(formData: FormData) {
+  const profile = await requireRole(MANAGEMENT_ROLES);
+  const profileId = String(formData.get("profileId") ?? "").trim();
+  const contractId = String(formData.get("contractId") ?? "").trim();
+
+  if (!profileId || !contractId) {
+    throw new Error("Missing contract reference.");
+  }
+
+  const supabase = createAdminClient();
+  const { data: contract, error: contractError } = await supabase
+    .from("contracts")
+    .select("id, driver_id, document_storage_path")
+    .eq("id", contractId)
+    .maybeSingle();
+
+  if (contractError || !contract) {
+    throw new Error("Contract record could not be found.");
+  }
+
+  if (contract.document_storage_path) {
+    await supabase.storage
+      .from("vmc-application-documents")
+      .remove([contract.document_storage_path]);
+  }
+
+  const { error: updateError } = await supabase
+    .from("contracts")
+    .update({
+      document_storage_path: null,
+      document_file_name: null,
+      document_uploaded_at: null,
+      document_file_size_bytes: null,
+      document_mime_type: null,
+    })
+    .eq("id", contractId);
+
+  if (updateError) {
+    throw new Error("The contract file was removed from storage, but its database reference could not be cleared.");
+  }
+
+  revalidatePath(`/management/drivers/${profileId}`);
+  revalidatePath("/management/documents");
+}
