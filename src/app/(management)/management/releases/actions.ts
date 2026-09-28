@@ -5,8 +5,8 @@ import { redirect } from "next/navigation";
 
 import { requireRole } from "@/lib/auth/authorization";
 import { ADMIN_ROLES } from "@/lib/auth/roles";
-import { FEATURE_CATALOG, type FeatureKey, isFeatureKey } from "@/lib/features/catalog";
-import { setFeatureFlagState, bulkSetFeatureFlagsState } from "@/lib/features/store";
+import { FEATURE_CATALOG, type FeatureKey, isDriverFeatureKey, isFeatureKey } from "@/lib/features/catalog";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 function revalidateAllFeaturePages() {
@@ -44,8 +44,15 @@ function releaseSuccess() {
   redirect("/management/releases?updated=1");
 }
 
-export async function toggleFeatureFlag(key: string, enabled: boolean) {
-  await requireRole(ADMIN_ROLES);
+export type FeatureToggleScope = "driver" | "management";
+
+export async function toggleFeatureFlag(
+  key: string,
+  enabled: boolean,
+  requestedScope: FeatureToggleScope = "management"
+) {
+  const profile = await requireRole(ADMIN_ROLES);
+
   if (!isFeatureKey(key)) {
     return { success: false, error: "Invalid feature key" };
   }
@@ -53,78 +60,161 @@ export async function toggleFeatureFlag(key: string, enabled: boolean) {
     return { success: false, error: "Core platform is required and cannot be disabled" };
   }
 
-  const supabase = await createClient();
+  const scope: FeatureToggleScope =
+    requestedScope === "driver" && isDriverFeatureKey(key) ? "driver" : "management";
+
+  const admin = createAdminClient();
   const catalogItem = FEATURE_CATALOG[key as FeatureKey];
 
-  // 1. Ensure or update feature_flags row
-  const { data: existingFlag } = await supabase
+  const { data: existingFlag, error: lookupError } = await admin
     .from("feature_flags")
-    .select("id")
+    .select("id, enabled, driver_enabled, description")
     .eq("key", key)
     .maybeSingle();
 
-  let flagId = existingFlag?.id;
+  if (lookupError) {
+    return { success: false, error: `Could not read feature flag: ${lookupError.message}` };
+  }
+
+  let flagId = existingFlag?.id ?? null;
+
   if (!flagId) {
-    const { data: inserted, error: insertError } = await supabase
+    const { data: inserted, error: insertError } = await admin
       .from("feature_flags")
       .insert({
         key,
-        enabled,
-        description: catalogItem?.description || null,
+        enabled: scope === "management" ? enabled : true,
+        driver_enabled: scope === "driver" ? enabled : enabled,
+        description: catalogItem?.description ?? null,
       })
       .select("id")
       .single();
-    if (!insertError && inserted) {
-      flagId = inserted.id;
+
+    if (insertError || !inserted) {
+      return {
+        success: false,
+        error: `Could not create feature flag: ${insertError?.message ?? "Unknown database error"}`,
+      };
     }
+
+    flagId = inserted.id;
   } else {
-    await supabase
+    const update = scope === "driver"
+      ? { driver_enabled: enabled }
+      : { enabled };
+
+    const { error: updateError } = await admin
       .from("feature_flags")
-      .update({ enabled })
+      .update(update)
       .eq("id", flagId);
+
+    if (updateError) {
+      return { success: false, error: `Could not save feature flag: ${updateError.message}` };
+    }
   }
 
-  // 2. Call RPC set_feature_flag if available
-  try {
-    await supabase.rpc("set_feature_flag", {
-      p_key: key,
-      p_enabled: enabled,
-      p_description: catalogItem?.description || null,
-    });
-  } catch {
-    // Non-fatal
-  }
-
-  // 3. Keep all environments in sync
-  if (flagId) {
+  // Management/global switches also control the environment gate.
+  // Driver-only switches intentionally leave management and environment state alone.
+  if (scope === "management" && flagId) {
     const envs = ["development", "preview", "production"] as const;
-    await supabase.from("feature_flag_environments").upsert(
-      envs.map((env) => ({
-        feature_flag_id: flagId,
-        environment: env,
-        enabled,
-      })),
-      { onConflict: "feature_flag_id,environment" }
-    );
+    const { error: environmentError } = await admin
+      .from("feature_flag_environments")
+      .upsert(
+        envs.map((environment) => ({
+          feature_flag_id: flagId,
+          environment,
+          enabled,
+          updated_by: profile.id,
+        })),
+        { onConflict: "feature_flag_id,environment" }
+      );
+
+    if (environmentError) {
+      return { success: false, error: `Could not save environment state: ${environmentError.message}` };
+    }
   }
 
-  // 4. Update the persistent local feature-flags state store
-  setFeatureFlagState(key as FeatureKey, enabled);
+  // Make sure the flag remains connected to releases matching the catalog version.
+  if (flagId && catalogItem) {
+    const baseVersion = catalogItem.release.split("-")[0];
+    const { data: releases, error: releasesError } = await admin
+      .from("releases")
+      .select("id, version");
+
+    if (releasesError) {
+      return { success: false, error: `Could not read releases: ${releasesError.message}` };
+    }
+
+    const matchingReleases = (releases ?? []).filter(
+      (release) =>
+        release.version === catalogItem.release ||
+        release.version.startsWith(baseVersion)
+    );
+
+    if (matchingReleases.length > 0) {
+      const { error: linkError } = await admin
+        .from("release_features")
+        .upsert(
+          matchingReleases.map((release) => ({
+            release_id: release.id,
+            feature_flag_id: flagId,
+          })),
+          { onConflict: "release_id,feature_flag_id" }
+        );
+
+      if (linkError) {
+        return { success: false, error: `Could not link feature to release: ${linkError.message}` };
+      }
+    }
+  }
+
+  const { error: auditError } = await admin.from("audit_logs").insert({
+    actor_id: profile.id,
+    action: scope === "driver" ? "driver_feature_access_changed" : "feature_flag_changed",
+    entity_type: "feature_flag",
+    entity_id: flagId,
+    old_values:
+      scope === "driver"
+        ? { driver_enabled: existingFlag?.driver_enabled ?? null }
+        : { enabled: existingFlag?.enabled ?? null },
+    new_values:
+      scope === "driver"
+        ? { driver_enabled: enabled, scope: "driver" }
+        : { enabled, scope: "management" },
+    metadata: {
+      source: "release_control",
+      feature: key,
+      scope,
+    },
+  });
+
+  if (auditError) {
+    console.warn("Feature toggle saved but audit logging failed:", auditError.message);
+  }
 
   revalidateAllFeaturePages();
-  return { success: true, enabled };
+  return {
+    success: true,
+    enabled,
+    scope,
+    managementEnabled: scope === "management" ? enabled : existingFlag?.enabled ?? true,
+    driverEnabled: scope === "driver" ? enabled : existingFlag?.driver_enabled ?? enabled,
+  };
 }
 
 export async function bulkSetFeatureFlags(keys: string[], enabled: boolean) {
   await requireRole(ADMIN_ROLES);
-  const validKeys = keys.filter(isFeatureKey);
-  const updates: Partial<Record<FeatureKey, boolean>> = {};
+
+  const validKeys = keys.filter(isFeatureKey) as FeatureKey[];
+
   for (const key of validKeys) {
-    if (key === "core_platform" && !enabled) continue;
-    await toggleFeatureFlag(key, enabled);
-    updates[key] = enabled;
+    const scope: FeatureToggleScope = isDriverFeatureKey(key) ? "driver" : "management";
+    const result = await toggleFeatureFlag(key, enabled, scope);
+    if (!result.success) {
+      return { success: false, error: result.error || `Could not update ${key}` };
+    }
   }
-  bulkSetFeatureFlagsState(updates);
+
   revalidateAllFeaturePages();
   return { success: true };
 }
