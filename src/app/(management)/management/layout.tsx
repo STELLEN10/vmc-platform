@@ -4,10 +4,14 @@ import { AppShell } from "@/components/app-shell";
 import { requireRole } from "@/lib/auth/authorization";
 import { MANAGEMENT_ROLES } from "@/lib/auth/roles";
 import { getManagementBadgeCounts } from "@/lib/notifications/server";
+import { hasFeatureAccess } from "@/lib/features/server";
 
 export default async function ManagementLayout({ children }: { children: ReactNode }) {
   const profile = await requireRole(MANAGEMENT_ROLES);
-  const badges = await getManagementBadgeCounts();
+  const [badges, referralsEnabled] = await Promise.all([
+    getManagementBadgeCounts(),
+    hasFeatureAccess("driver_referrals"),
+  ]);
 
   const baseNavigation = [
     { href: "/management", label: "Dashboard" },
@@ -39,6 +43,7 @@ export default async function ManagementLayout({ children }: { children: ReactNo
       badge: badges.unresolvedEmergencies,
     },
     { href: "/management/services", label: "Services" },
+    ...(referralsEnabled ? [{ href: "/management/referrals", label: "Referrals" }] : []),
     { href: "/management/documents", label: "Documents" },
     { href: "/management/analytics", label: "Analytics" },
     { href: "/management/activity", label: "Activity" },
