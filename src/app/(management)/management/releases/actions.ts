@@ -195,7 +195,7 @@ export async function toggleFeatureFlag(
     entity_id: flagId,
     old_values:
       scope === "driver"
-        ? { driver_override: true }
+        ? { driver_override: "unknown" }
         : { enabled: existingFlag?.enabled ?? null },
     new_values:
       scope === "driver"
