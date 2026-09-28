@@ -7,10 +7,10 @@ import { createClient } from "@/lib/supabase/server";
 import { type FeatureKey, isDriverFeatureKey } from "./catalog";
 
 /**
- * Release Control switches are driver-access switches for driver-facing features.
- * Management access is intentionally independent and remains available.
+ * Management access is independent from the Release Control driver switches.
  *
- * A driver-facing feature defaults to ON for drivers until an explicit
+ * For drivers, only features explicitly classified as driver-facing are
+ * considered. Their access defaults to ON until an explicit
  * feature_driver_<key> override is saved in system_settings.
  */
 export async function hasFeatureAccess(feature: FeatureKey): Promise<boolean> {
@@ -31,15 +31,15 @@ export async function hasFeatureAccess(feature: FeatureKey): Promise<boolean> {
 
   if (profileError || !profile) return false;
 
-  // Management is never disabled by the driver-access switches.
+  // Management is always active. Driver switches must never remove
+  // management modules or block management routes.
   if (profile.role !== "driver") return true;
 
-  // Only these catalog items are exposed to drivers.
+  // A driver can only access catalog entries intended for the driver app.
   if (!isDriverFeatureKey(feature)) return false;
 
   const admin = createAdminClient();
   const settingKey = `feature_driver_${feature}`;
-
   const { data: setting, error: settingError } = await admin
     .from("system_settings")
     .select("value")
@@ -51,13 +51,13 @@ export async function hasFeatureAccess(feature: FeatureKey): Promise<boolean> {
     return false;
   }
 
-  // No explicit override means the feature stays ON for drivers.
   const value = setting?.value;
   if (value && typeof value === "object" && !Array.isArray(value)) {
     const enabled = (value as { enabled?: unknown }).enabled;
     if (typeof enabled === "boolean") return enabled;
   }
 
+  // No driver override exists yet: keep the driver feature ON.
   return true;
 }
 
