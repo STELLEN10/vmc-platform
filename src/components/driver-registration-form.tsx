@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 
 const PHONE_PATTERN = /^\+?[1-9]\d{7,14}$/;
 
-export function DriverRegistrationForm() {
+export function DriverRegistrationForm({ referralCode = "" }: { referralCode?: string }) {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,7 +42,11 @@ export function DriverRegistrationForm() {
         email,
         password,
         options: {
-          data: { full_name: fullName, phone },
+          data: {
+            full_name: fullName,
+            phone,
+            ...(referralCode.trim() ? { referral_code: referralCode.trim().toUpperCase() } : {}),
+          },
           emailRedirectTo: `${window.location.origin}/auth/callback?next=/driver/onboarding`,
         },
       });
@@ -72,6 +76,15 @@ export function DriverRegistrationForm() {
       <label>Full name<input name="fullName" autoComplete="name" minLength={2} required /></label>
       <label>Email address<input name="email" type="email" autoComplete="email" required /></label>
       <label>Phone number<input name="phone" type="tel" autoComplete="tel" placeholder="+27…" required /></label>
+      {referralCode.trim() && (
+        <div className="rounded-lg border border-red-100 bg-red-50/70 p-3">
+          <p className="card-label text-red-700">VMC REFERRAL</p>
+          <p className="text-xs text-neutral-600">
+            Referral code <strong className="font-mono text-neutral-900">{referralCode.trim().toUpperCase()}</strong> has been attached to this signup.
+          </p>
+          <input type="hidden" name="referralCode" value={referralCode.trim().toUpperCase()} />
+        </div>
+      )}
       <label>Password<input name="password" type="password" autoComplete="new-password" minLength={12} required /></label>
       <label>Confirm password<input name="confirmPassword" type="password" autoComplete="new-password" minLength={12} required /></label>
       {message && <p className="form-message form-message--error" role="alert">{message}</p>}

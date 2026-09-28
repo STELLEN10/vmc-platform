@@ -3,7 +3,13 @@ import Link from "next/link";
 import { BrandMark } from "@/components/brand-mark";
 import { DriverRegistrationForm } from "@/components/driver-registration-form";
 
-export default function DriverRegistrationPage() {
+type DriverRegistrationPageProps = {
+  searchParams: Promise<{ ref?: string }>;
+};
+
+export default async function DriverRegistrationPage({ searchParams }: DriverRegistrationPageProps) {
+  const { ref } = await searchParams;
+
   return (
     <main className="driver-auth-page">
       <section className="driver-auth-page__hero">
@@ -20,7 +26,7 @@ export default function DriverRegistrationPage() {
           <p className="eyebrow driver-eyebrow">VMC DRIVER</p>
           <h2>Create your account</h2>
           <p className="page-description">Driver access only. VMC reviews every onboarding submission.</p>
-          <DriverRegistrationForm />
+          <DriverRegistrationForm referralCode={ref} />
           <p className="form-note">Already registered as a driver? <Link href="/driver/login">Sign in to Driver Portal</Link></p>
         </div>
       </section>

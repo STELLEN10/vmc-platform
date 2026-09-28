@@ -89,6 +89,7 @@ export type InventoryMovementType =
   | "received"
   | "used"
   | "returned";
+export type ReferralStatus = "created" | "applied" | "qualified" | "reward_pending" | "rewarded" | "cancelled";
 
 export type Database = {
   public: {
@@ -1140,6 +1141,71 @@ export type Database = {
         };
         Relationships: [];
       };
+      driver_referrals: {
+        Row: {
+          id: string;
+          referrer_driver_id: string;
+          referral_code: string;
+          referred_application_id: string | null;
+          referred_driver_id: string | null;
+          status: ReferralStatus;
+          qualification_note: string | null;
+          qualified_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          referrer_driver_id: string;
+          referral_code: string;
+          referred_application_id?: string | null;
+          referred_driver_id?: string | null;
+          status?: ReferralStatus;
+          qualification_note?: string | null;
+          qualified_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          referred_application_id?: string | null;
+          referred_driver_id?: string | null;
+          status?: ReferralStatus;
+          qualification_note?: string | null;
+          qualified_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      referral_rewards: {
+        Row: {
+          id: string;
+          referral_id: string;
+          amount: number;
+          status: ReferralStatus;
+          paid_at: string | null;
+          processed_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          referral_id: string;
+          amount?: number;
+          status?: ReferralStatus;
+          paid_at?: string | null;
+          processed_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          amount?: number;
+          status?: ReferralStatus;
+          paid_at?: string | null;
+          processed_by?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -1257,6 +1323,29 @@ export type Database = {
         };
         Returns: string;
       };
+      create_driver_referral: {
+        Args: Record<string, never>;
+        Returns: {
+          referral_id: string;
+          referral_code: string;
+        }[];
+      };
+      claim_referral_for_driver: {
+        Args: { p_referred_driver_id: string; p_referral_code: string };
+        Returns: string;
+      };
+      qualify_driver_referral: {
+        Args: { p_referral_id: string; p_note?: string | null };
+        Returns: undefined;
+      };
+      cancel_driver_referral: {
+        Args: { p_referral_id: string; p_note?: string | null };
+        Returns: undefined;
+      };
+      reward_driver_referral: {
+        Args: { p_referral_id: string };
+        Returns: undefined;
+      };
       update_business_settings: {
         Args: {
           p_business_timezone: string;
@@ -1273,6 +1362,7 @@ export type Database = {
     };
     Enums: {
       app_role: AppRole;
+      referral_status: ReferralStatus;
       bike_status: BikeStatus;
       bike_assignment_status: BikeAssignmentStatus;
       contract_status: ContractStatus;
