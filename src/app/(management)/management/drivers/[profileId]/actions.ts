@@ -147,6 +147,7 @@ export async function assignBikeToDriver(formData: FormData) {
 
   await supabase.from("drivers").update({ bike_id: bikeId }).eq("id", driver.id);
   await supabase.from("bikes").update({ status: "assigned" }).eq("id", bikeId);
+  await claimReferralFromSignup(profileId);
 
   revalidatePath(`/management/drivers/${profileId}`);
   revalidatePath("/management/bikes");
