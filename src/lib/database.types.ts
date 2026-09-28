@@ -624,11 +624,22 @@ export type Database = {
           key: string;
           description: string | null;
           enabled: boolean;
+          driver_enabled: boolean;
           created_at: string;
           updated_at: string;
         };
-        Insert: { id?: string; key: string; description?: string | null; enabled?: boolean };
-        Update: { description?: string | null; enabled?: boolean };
+        Insert: {
+          id?: string;
+          key: string;
+          description?: string | null;
+          enabled?: boolean;
+          driver_enabled?: boolean;
+        };
+        Update: {
+          description?: string | null;
+          enabled?: boolean;
+          driver_enabled?: boolean;
+        };
         Relationships: [];
       };
       audit_logs: {
