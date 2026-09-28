@@ -1,10 +1,12 @@
 import { requireRole } from "@/lib/auth/authorization";
 import { MANAGEMENT_ROLES } from "@/lib/auth/roles";
+import { requireFeature } from "@/lib/features/server";
 import { createClient } from "@/lib/supabase/server";
 import { ActivityView, type AuditLogItem } from "./activity-view";
 
 export default async function ManagementActivityPage() {
   await requireRole(MANAGEMENT_ROLES);
+  await requireFeature("global_activity_audit");
   const supabase = await createClient();
 
   const { data: rawLogs } = await supabase

@@ -1,10 +1,12 @@
 import { requireRole } from "@/lib/auth/authorization";
 import { MANAGEMENT_ROLES } from "@/lib/auth/roles";
+import { requireFeature } from "@/lib/features/server";
 import { createClient } from "@/lib/supabase/server";
 import { NotificationsView, type ManagementNotificationItem, type DriverOption } from "./notifications-view";
 
 export default async function ManagementNotificationsPage() {
   await requireRole(MANAGEMENT_ROLES);
+  await requireFeature("notification_system");
   const supabase = await createClient();
 
   // 1. Fetch management notifications

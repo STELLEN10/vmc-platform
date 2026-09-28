@@ -1,10 +1,12 @@
 import { requireRole } from "@/lib/auth/authorization";
 import { MANAGEMENT_ROLES } from "@/lib/auth/roles";
+import { requireFeature } from "@/lib/features/server";
 import { createClient } from "@/lib/supabase/server";
 import { AnalyticsView, type OperationsAnalyticsData } from "./analytics-view";
 
 export default async function ManagementAnalyticsPage() {
   await requireRole(MANAGEMENT_ROLES);
+  await requireFeature("operations_analytics");
   const supabase = await createClient();
 
   // 1. Bikes Fleet

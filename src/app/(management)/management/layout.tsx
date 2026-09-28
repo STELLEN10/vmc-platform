@@ -8,19 +8,43 @@ import { hasFeatureAccess } from "@/lib/features/server";
 
 export default async function ManagementLayout({ children }: { children: ReactNode }) {
   const profile = await requireRole(MANAGEMENT_ROLES);
-  const [badges, referralsEnabled, aiEnabled] = await Promise.all([
+  const [
+    badges,
+    notificationsEnabled,
+    maintenanceEnabled,
+    inventoryEnabled,
+    emergencyEnabled,
+    servicesEnabled,
+    referralsEnabled,
+    aiEnabled,
+    documentsEnabled,
+    analyticsEnabled,
+    activityEnabled,
+  ] = await Promise.all([
     getManagementBadgeCounts(),
+    hasFeatureAccess("notification_system"),
+    hasFeatureAccess("new_maintenance"),
+    hasFeatureAccess("parts_inventory"),
+    hasFeatureAccess("emergency_bike_support"),
+    hasFeatureAccess("service_requests"),
     hasFeatureAccess("driver_referrals"),
     hasFeatureAccess("ai_assistant"),
+    hasFeatureAccess("management_documents"),
+    hasFeatureAccess("operations_analytics"),
+    hasFeatureAccess("global_activity_audit"),
   ]);
 
   const baseNavigation = [
     { href: "/management", label: "Dashboard" },
-    {
-      href: "/management/notifications",
-      label: "Alerts",
-      badge: badges.unreadNotifications,
-    },
+    ...(notificationsEnabled
+      ? [
+          {
+            href: "/management/notifications",
+            label: "Alerts",
+            badge: badges.unreadNotifications,
+          },
+        ]
+      : []),
     { href: "/management/drivers", label: "Drivers" },
     { href: "/management/bikes", label: "Bikes" },
     {
@@ -28,27 +52,39 @@ export default async function ManagementLayout({ children }: { children: ReactNo
       label: "Finance",
       badge: badges.pendingPayments,
     },
-    {
-      href: "/management/maintenance",
-      label: "Maintenance",
-      badge: badges.openMaintenance,
-    },
-    {
-      href: "/management/inventory",
-      label: "Inventory",
-      badge: badges.lowStockParts,
-    },
-    {
-      href: "/management/emergency",
-      label: "Emergency",
-      badge: badges.unresolvedEmergencies,
-    },
-    { href: "/management/services", label: "Services" },
+    ...(maintenanceEnabled
+      ? [
+          {
+            href: "/management/maintenance",
+            label: "Maintenance",
+            badge: badges.openMaintenance,
+          },
+        ]
+      : []),
+    ...(inventoryEnabled
+      ? [
+          {
+            href: "/management/inventory",
+            label: "Inventory",
+            badge: badges.lowStockParts,
+          },
+        ]
+      : []),
+    ...(emergencyEnabled
+      ? [
+          {
+            href: "/management/emergency",
+            label: "Emergency",
+            badge: badges.unresolvedEmergencies,
+          },
+        ]
+      : []),
+    ...(servicesEnabled ? [{ href: "/management/services", label: "Services" }] : []),
     ...(referralsEnabled ? [{ href: "/management/referrals", label: "Referrals" }] : []),
     ...(aiEnabled ? [{ href: "/management/ai", label: "VMC AI" }] : []),
-    { href: "/management/documents", label: "Documents" },
-    { href: "/management/analytics", label: "Analytics" },
-    { href: "/management/activity", label: "Activity" },
+    ...(documentsEnabled ? [{ href: "/management/documents", label: "Documents" }] : []),
+    ...(analyticsEnabled ? [{ href: "/management/analytics", label: "Analytics" }] : []),
+    ...(activityEnabled ? [{ href: "/management/activity", label: "Activity" }] : []),
     { href: "/management/releases", label: "Release control" },
     { href: "/management/team", label: "Team access" },
     { href: "/management/settings", label: "Settings" },

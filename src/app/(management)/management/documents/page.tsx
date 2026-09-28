@@ -1,5 +1,6 @@
 import { requireRole } from "@/lib/auth/authorization";
 import { MANAGEMENT_ROLES } from "@/lib/auth/roles";
+import { requireFeature } from "@/lib/features/server";
 import { createClient } from "@/lib/supabase/server";
 import { DocumentsView, type UnifiedDocumentItem } from "./documents-view";
 
@@ -72,6 +73,7 @@ type RawEmergencyDoc = {
 
 export default async function ManagementDocumentsPage() {
   await requireRole(MANAGEMENT_ROLES);
+  await requireFeature("management_documents");
   const supabase = await createClient();
 
   const documents: UnifiedDocumentItem[] = [];

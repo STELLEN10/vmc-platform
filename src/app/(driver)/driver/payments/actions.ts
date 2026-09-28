@@ -5,6 +5,11 @@ import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth/authorization";
 import { DRIVER_ROLES } from "@/lib/auth/roles";
 import { createClient } from "@/lib/supabase/server";
+import {
+  getInvoicesAndQuotations,
+  saveInvoicesAndQuotations,
+  type InvoiceStatus,
+} from "@/lib/finance/invoices";
 
 export async function uploadPaymentProof(formData: FormData) {
   const profile = await requireRole(DRIVER_ROLES);
@@ -73,4 +78,49 @@ export async function uploadPaymentProof(formData: FormData) {
   }
 
   revalidatePath("/driver/payments");
+}
+
+export async function driverRespondToQuotation(quotationId: string, response: "accept" | "decline") {
+  const profile = await requireRole(DRIVER_ROLES);
+  const currentDocs = await getInvoicesAndQuotations();
+  const quote = currentDocs.find((d) => d.id === quotationId);
+
+  if (!quote) return { error: "Quotation not found" };
+
+  const newStatus: InvoiceStatus = response === "accept" ? "accepted" : "declined";
+
+  const updatedDocs = currentDocs.map((d) => {
+    if (d.id === quotationId) {
+      return {
+        ...d,
+        status: newStatus,
+        acceptedAt: response === "accept" ? new Date().toISOString() : d.acceptedAt,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+    return d;
+  });
+
+  await saveInvoicesAndQuotations(updatedDocs);
+
+  // Notify management
+  const supabase = await createClient();
+  try {
+    await supabase.from("management_notifications").insert({
+      type: "general",
+      title: response === "accept" ? `Quotation Accepted by Driver` : `Quotation Declined by Driver`,
+      body: `Driver ${profile.fullName || "Driver"} ${
+        response === "accept" ? "accepted" : "declined"
+      } quotation ${quote.docNumber} (R${quote.totalAmount.toFixed(2)}).`,
+      driver_profile_id: profile.id,
+      severity: "low",
+      action_url: "/management/finance",
+    });
+  } catch (err) {
+    console.error("Failed to notify management of quote response:", err);
+  }
+
+  revalidatePath("/driver/payments");
+  revalidatePath("/management/finance");
+  return { success: true };
 }
