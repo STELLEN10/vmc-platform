@@ -77,7 +77,7 @@ export default async function ManagementFinancePage() {
       ),
       bikes (
         id,
-        registration
+        registration_number
       )
     `).order("created_at", { ascending: false }),
   ]);
