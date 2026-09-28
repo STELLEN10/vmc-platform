@@ -5,6 +5,84 @@ import { Bot, Send, Sparkles, UserRound } from "lucide-react";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
+function cleanInlineMarkdown(text: string): string {
+  return text
+    .replaceAll("**", "")
+    .replaceAll("__", "")
+    .replaceAll("`", "")
+    .replace(/(^|\\s)\\*([^*\\n]+)\\*(?=\\s|$)/g, "$1$2")
+    .replace(/(^|\\s)_([^_\\n]+)_(?=\\s|$)/g, "$1$2")
+    .trim();
+}
+
+function isTableSeparator(line: string): boolean {
+  const cells = line.trim().replace(/^\\|/, "").replace(/\\|$/, "").split("|");
+  return cells.length > 0 && cells.every((cell) => /^\\s*:?-{3,}:?\\s*$/.test(cell));
+}
+
+function splitTableRow(line: string): string[] {
+  return line.trim().replace(/^\\|/, "").replace(/\\|$/, "").split("|").map((cell) => cleanInlineMarkdown(cell));
+}
+
+function AssistantMessage({ content }: { content: string }) {
+  const lines = content.replace(/\\r\\n/g, "\\n").split("\\n");
+  const blocks: React.ReactNode[] = [];
+  let i = 0;
+  let key = 0;
+
+  while (i < lines.length) {
+    const line = lines[i].trim();
+    if (!line) { i += 1; continue; }
+
+    if (line.startsWith("|") && i + 1 < lines.length && isTableSeparator(lines[i + 1])) {
+      const headers = splitTableRow(line);
+      const rows: string[][] = [];
+      i += 2;
+      while (i < lines.length && lines[i].trim().startsWith("|")) {
+        rows.push(splitTableRow(lines[i]));
+        i += 1;
+      }
+      blocks.push(
+        <div key={key++} className="my-3 overflow-x-auto rounded-xl border border-neutral-200 bg-white">
+          <table className="w-full border-collapse text-left text-xs">
+            <thead className="bg-neutral-50"><tr>
+              {headers.map((header, index) => <th key={index} className="border-b border-neutral-200 px-3 py-2 font-bold text-neutral-700">{header}</th>)}
+            </tr></thead>
+            <tbody>
+              {rows.map((row, rowIndex) => <tr key={rowIndex} className="border-b border-neutral-100 last:border-b-0">
+                {headers.map((_, columnIndex) => <td key={columnIndex} className="px-3 py-2 align-top text-neutral-700">{row[columnIndex] ?? "—"}</td>)}
+              </tr>)}
+            </tbody>
+          </table>
+        </div>,
+      );
+      continue;
+    }
+
+    const headingMatch = line.match(/^#{1,4}\\s+(.+)$/);
+    const boldHeading = line.match(/^\\*\\*([^*]+)\\*\\*:?$/);
+    if (headingMatch || boldHeading) {
+      blocks.push(<p key={key++} className="mb-2 mt-3 text-sm font-extrabold text-neutral-900 first:mt-0">{cleanInlineMarkdown((headingMatch || boldHeading)![1])}</p>);
+      i += 1; continue;
+    }
+
+    if (/^[-*]\\s+/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^[-*]\\s+/.test(lines[i].trim())) {
+        items.push(cleanInlineMarkdown(lines[i].trim().replace(/^[-*]\\s+/, "")));
+        i += 1;
+      }
+      blocks.push(<ul key={key++} className="my-2 list-disc space-y-1 pl-5 text-sm text-neutral-800">{items.map((item, index) => <li key={index}>{item}</li>)}</ul>);
+      continue;
+    }
+
+    blocks.push(<p key={key++} className="my-2 text-sm leading-6 text-neutral-800">{cleanInlineMarkdown(line)}</p>);
+    i += 1;
+  }
+
+  return <div>{blocks}</div>;
+}
+
 export function AiAssistant({
   role,
   suggestions,
@@ -90,7 +168,7 @@ export function AiAssistant({
               <div key={index} className={`flex gap-2.5 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                 {message.role === "assistant" && <Bot className="mt-1 h-4 w-4 shrink-0 text-red-600" />}
                 <div className={`max-w-[88%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm leading-6 ${message.role === "user" ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-800"}`}>
-                  {message.content}
+                  {message.role === "assistant" ? <AssistantMessage content={message.content} /> : message.content}
                 </div>
                 {message.role === "user" && <UserRound className="mt-1 h-4 w-4 shrink-0 text-neutral-400" />}
               </div>
