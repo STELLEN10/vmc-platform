@@ -3,6 +3,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { requireRole } from "@/lib/auth/authorization";
 import { MANAGEMENT_ROLES } from "@/lib/auth/roles";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isDriverFeatureKey } from "@/lib/features/catalog";
 import { createClient } from "@/lib/supabase/server";
 import { FeatureToggleBoard, type BetaAssignmentData } from "./feature-toggle-board";
 
@@ -64,7 +65,10 @@ export default async function ReleaseControlPage({
   const formattedFlags = (flags ?? []).map((flag) => ({
     key: flag.key,
     enabled: flag.enabled,
-    driverEnabled: driverOverrideMap.get(`feature_driver_${flag.key}`) ?? flag.enabled,
+    driverEnabled:
+      isDriverFeatureKey(flag.key as import("@/lib/features/catalog").FeatureKey)
+        ? (driverOverrideMap.get(`feature_driver_${flag.key}`) ?? true)
+        : false,
     description: flag.description,
   }));
 
