@@ -94,6 +94,76 @@ export type ReferralStatus = "created" | "applied" | "qualified" | "reward_pendi
 export type Database = {
   public: {
     Tables: {
+      invoices: {
+        Row: {
+          id: string;
+          document_type: "invoice" | "quotation" | "receipt";
+          invoice_number: string;
+          driver_id: string | null;
+          profile_id: string | null;
+          recipient_name: string;
+          recipient_email: string | null;
+          recipient_phone: string | null;
+          recipient_address: string | null;
+          bike_reference: string | null;
+          issue_date: string;
+          due_date: string | null;
+          items: unknown;
+          subtotal: number;
+          vat_rate: number;
+          vat_amount: number;
+          total_amount: number;
+          status: "draft" | "issued" | "paid" | "cancelled";
+          notes: string | null;
+          created_at: string;
+          updated_at?: string;
+        };
+        Insert: {
+          id?: string;
+          document_type?: "invoice" | "quotation" | "receipt";
+          invoice_number: string;
+          driver_id?: string | null;
+          profile_id?: string | null;
+          recipient_name: string;
+          recipient_email?: string | null;
+          recipient_phone?: string | null;
+          recipient_address?: string | null;
+          bike_reference?: string | null;
+          issue_date?: string;
+          due_date?: string | null;
+          items?: unknown;
+          subtotal?: number;
+          vat_rate?: number;
+          vat_amount?: number;
+          total_amount?: number;
+          status?: "draft" | "issued" | "paid" | "cancelled";
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          document_type?: "invoice" | "quotation" | "receipt";
+          invoice_number?: string;
+          driver_id?: string | null;
+          profile_id?: string | null;
+          recipient_name?: string;
+          recipient_email?: string | null;
+          recipient_phone?: string | null;
+          recipient_address?: string | null;
+          bike_reference?: string | null;
+          issue_date?: string;
+          due_date?: string | null;
+          items?: unknown;
+          subtotal?: number;
+          vat_rate?: number;
+          vat_amount?: number;
+          total_amount?: number;
+          status?: "draft" | "issued" | "paid" | "cancelled";
+          notes?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           id: string;
