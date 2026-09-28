@@ -8,9 +8,10 @@ import { hasFeatureAccess } from "@/lib/features/server";
 
 export default async function ManagementLayout({ children }: { children: ReactNode }) {
   const profile = await requireRole(MANAGEMENT_ROLES);
-  const [badges, referralsEnabled] = await Promise.all([
+  const [badges, referralsEnabled, aiEnabled] = await Promise.all([
     getManagementBadgeCounts(),
     hasFeatureAccess("driver_referrals"),
+    hasFeatureAccess("ai_assistant"),
   ]);
 
   const baseNavigation = [
@@ -44,6 +45,7 @@ export default async function ManagementLayout({ children }: { children: ReactNo
     },
     { href: "/management/services", label: "Services" },
     ...(referralsEnabled ? [{ href: "/management/referrals", label: "Referrals" }] : []),
+    ...(aiEnabled ? [{ href: "/management/ai", label: "VMC AI" }] : []),
     { href: "/management/documents", label: "Documents" },
     { href: "/management/analytics", label: "Analytics" },
     { href: "/management/activity", label: "Activity" },
