@@ -7,7 +7,10 @@ import { hasFeatureAccess } from "@/lib/features/server";
 
 export default async function DriverLayout({ children }: { children: ReactNode }) {
   const profile = await requireRole(DRIVER_ROLES);
-  const referralsEnabled = await hasFeatureAccess("driver_referrals");
+  const [referralsEnabled, aiEnabled] = await Promise.all([
+    hasFeatureAccess("driver_referrals"),
+    hasFeatureAccess("ai_assistant"),
+  ]);
 
   const driverNavigation = [
     { href: "/driver", label: "Overview" },
@@ -18,6 +21,7 @@ export default async function DriverLayout({ children }: { children: ReactNode }
     { href: "/driver/emergency", label: "Emergency" },
     { href: "/driver/services", label: "Service booking" },
     ...(referralsEnabled ? [{ href: "/driver/referrals", label: "Referrals" }] : []),
+    ...(aiEnabled ? [{ href: "/driver/ai", label: "VMC AI" }] : []),
     { href: "/driver/bike", label: "My motorcycle" },
     { href: "/driver/profile", label: "My profile" },
     { href: "/driver/onboarding", label: "My onboarding" },
