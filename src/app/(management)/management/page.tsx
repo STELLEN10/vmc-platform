@@ -75,7 +75,7 @@ export default async function ManagementDashboardPage() {
       <PageHeading
         eyebrow="VMC MANAGEMENT"
         title="Operations Command Center"
-        description="Live operational intelligence, fleet telemetry, driver safety dispatches, and financial ledger control across Pretoria & Midrand."
+        description="Live operational intelligence, fleet telemetry, driver safety dispatches, and financial ledger control across Pretoria to Midrand."
       />
 
       <section className="metric-grid" aria-label="Operational summary">

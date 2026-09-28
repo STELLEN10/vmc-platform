@@ -129,6 +129,13 @@ export function DocumentsView({
           >
             All Files ({counts.all})
           </button>
+          <Link
+            href="/management/quotations"
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-blue-600/40 bg-blue-50 hover:bg-blue-100 text-blue-900 transition-colors flex items-center gap-1"
+          >
+            <span>📋 Official Quotations (VS Procurement)</span>
+            <span className="text-[10px] bg-blue-600 text-white px-1.5 rounded font-mono font-bold">New</span>
+          </Link>
           <button
             type="button"
             onClick={() => setSelectedCategory("contract")}
