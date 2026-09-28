@@ -181,10 +181,11 @@ export function FeatureToggleBoard({
         } else {
           setFeedbackMessage({
             type: "success",
-            text: `${FEATURE_CATALOG[key].name} (${FEATURE_CATALOG[key].release}) is now ${
-              nextState ? "ON (Active for testing)" : "OFF (Completely canceled & hidden from app)"
-            }.`,
-          });
+            text:
+              scope === "driver"
+                ? `${FEATURE_CATALOG[key].name} driver access is now ${nextState ? "ON" : "OFF"}. Management access remains separate.`
+                : `${FEATURE_CATALOG[key].name} management access is now ${nextState ? "ON" : "OFF"}.`,
+          }););
         }
       } catch (err: unknown) {
         setFlagsState((prev) => ({
@@ -227,7 +228,7 @@ export function FeatureToggleBoard({
         if (result && !result.success) throw new Error(result.error || "Batch feature update failed.");
         setFeedbackMessage({
           type: "success",
-          text: `Successfully ${targetState ? "turned ON" : "turned OFF"} ${label}. Changes applied across entire app.`,
+          text: `Successfully ${targetState ? "turned ON" : "turned OFF"} ${label}. Driver-facing features changed driver access only; management access remains separate.`,
         });
       } catch (err: unknown) {
         setFlagsState(previous);
@@ -465,7 +466,10 @@ export function FeatureToggleBoard({
           {/* Grid of Toggle Cards */}
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredFeatures.map(([key, item]) => {
-              const isEnabled = flagsState[key] ?? false;
+              const isDriverScoped = isDriverFeatureKey(key);
+              const managementEnabled = flagsState[key]?.management ?? false;
+              const driverEnabled = flagsState[key]?.driver ?? false;
+              const isEnabled = isDriverScoped ? driverEnabled : managementEnabled;
               const isKeyPending = pendingKeys[key] || false;
               const isCore = key === "core_platform";
               const links = FEATURE_LINKS[key];
@@ -517,6 +521,11 @@ export function FeatureToggleBoard({
                     <p className="text-xs text-muted m-0 line-clamp-2 leading-relaxed">
                       {item.description}
                     </p>
+                    {isDriverScoped && (
+                      <p className="text-[10px] text-slate-500 m-0 mt-1 font-medium">
+                        Management: {managementEnabled ? "active" : "off"} · Driver: {driverEnabled ? "active" : "off"}
+                      </p>
+                    )}
                   </div>
 
                   {/* Card Footer: Quick Test Link & Toggle Switch */}
@@ -528,7 +537,7 @@ export function FeatureToggleBoard({
                           href={links.managementHref}
                           className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 hover:underline"
                         >
-                          Test Feature <ExternalLink className="w-3 h-3" />
+                          Test (Management) <ExternalLink className="w-3 h-3" />
                         </Link>
                       ) : driverEnabled && links?.driverHref ? (
                         <Link
@@ -539,7 +548,15 @@ export function FeatureToggleBoard({
                         </Link>
                       ) : (
                         <span className="text-[11px] text-slate-400 font-medium">
-                          {isEnabled ? "Feature active" : "Canceled / Off"}
+                          {isDriverScoped
+                            ? driverEnabled
+                              ? "Driver access active"
+                              : managementEnabled
+                                ? "Driver access off · Management active"
+                                : "Access off"
+                            : managementEnabled
+                              ? "Management active"
+                              : "Management off"}
                         </span>
                       )}
                     </div>
@@ -551,7 +568,7 @@ export function FeatureToggleBoard({
                           isEnabled ? "text-emerald-700" : "text-slate-400"
                         }`}
                       >
-                        {isEnabled ? "ON" : "OFF"}
+                        {isDriverScoped ? (isEnabled ? "DRIVER ON" : "DRIVER OFF") : (isEnabled ? "ON" : "OFF")}
                       </span>
 
                       {isCore ? (
@@ -571,7 +588,7 @@ export function FeatureToggleBoard({
                           className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                             isEnabled ? "bg-emerald-600" : "bg-slate-300"
                           } ${(!isAdmin || isKeyPending) ? "opacity-60 cursor-wait" : ""}`}
-                          title={`Turn ${isEnabled ? "OFF" : "ON"} ${item.name}`}
+                          title={`Turn ${isEnabled ? "OFF" : "ON"} ${isDriverScoped ? "driver access" : "management access"} for ${item.name}`}
                         >
                           <span className="sr-only">Toggle {item.name}</span>
                           <span
