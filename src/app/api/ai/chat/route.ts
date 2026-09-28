@@ -40,7 +40,9 @@ function systemPrompt(profile: Awaited<ReturnType<typeof getAuthenticatedProfile
     profile.role === "driver"
       ? "The driver may only receive their own personal, vehicle and payment information plus driver-visible compatible parts."
       : "Management may receive management operational summaries and inventory details available through authorized tools.",
-    "Keep replies concise and easy to read on a phone.",
+    "Keep replies concise, polished and easy to read on a phone. Use a clear professional structure: a short heading when useful, then concise sentences or bullet points.",
+    "Do not use Markdown emphasis such as **bold**, __bold__, _italics_, backticks, or raw HTML. Do not put decorative asterisks in your reply.",
+    "When structured data has multiple records or fields, use a Markdown table with a header row and separator row; the VMC app renders these tables as native clean tables. Do not create giant tables when a short bullet list is clearer.",
   ].join(" ");
 }
 
