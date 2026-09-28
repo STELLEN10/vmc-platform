@@ -105,6 +105,15 @@ export async function claimReferralFromSignup(profileId: string) {
 
   if (!driver) return { claimed: false };
 
+  const { data: existingReferral } = await admin
+    .from("driver_referrals")
+    .select("id")
+    .eq("referred_driver_id", driver.id)
+    .not("status", "in", "(cancelled,rewarded)")
+    .maybeSingle();
+
+  if (existingReferral) return { claimed: false, alreadyClaimed: true };
+
   const { data: referralId, error } = await supabase.rpc("claim_referral_for_driver", {
     p_referred_driver_id: driver.id,
     p_referral_code: referralCode,
