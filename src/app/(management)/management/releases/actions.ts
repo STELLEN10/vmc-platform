@@ -97,25 +97,14 @@ export async function toggleFeatureFlag(
     }
 
     flagId = inserted.id;
-  } else {
-    const update = scope === "management"
-      ? { enabled }
-      : null;
-
+  } else if (scope === "management") {
     const { error: updateError } = await admin
       .from("feature_flags")
-      .update(update)
+      .update({ enabled })
       .eq("id", flagId);
 
-    if (update) {
-      const { error: updateError } = await admin
-        .from("feature_flags")
-        .update(update)
-        .eq("id", flagId);
-
-      if (updateError) {
-        return { success: false, error: `Could not save feature flag: ${updateError.message}` };
-      }
+    if (updateError) {
+      return { success: false, error: `Could not save feature flag: ${updateError.message}` };
     }
   }
 
