@@ -15,7 +15,10 @@ export default async function ReleaseControlPage({
   const supabase = await createClient();
 
   const [{ data: flags }, { data: rawAssignments }] = await Promise.all([
-    supabase.from("feature_flags").select("*").order("key"),
+    supabase
+      .from("feature_flags")
+      .select("id, key, enabled, driver_enabled, description")
+      .order("key"),
     supabase
       .from("feature_flag_assignments")
       .select(`
@@ -58,7 +61,7 @@ export default async function ReleaseControlPage({
       <PageHeading
         eyebrow="VMC MANAGEMENT · CONTROL PLANE"
         title="Release & Feature Control"
-        description="Turn features ON or OFF with immediate live effect across the platform. Switch ON to test before official release; switch OFF to completely cancel and hide features from all users and drivers."
+        description="Each switch is persistent. Driver-facing features have a Driver Access switch, so turning one OFF hides it from drivers while management keeps its operational access. Management-only switches control management availability."
       />
 
       {updated === "1" && (
