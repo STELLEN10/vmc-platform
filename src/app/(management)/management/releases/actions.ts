@@ -68,7 +68,7 @@ export async function toggleFeatureFlag(
 
   const { data: existingFlag, error: lookupError } = await admin
     .from("feature_flags")
-    .select("id, enabled, driver_enabled, description")
+    .select("id, enabled, description")
     .eq("key", key)
     .maybeSingle();
 
@@ -83,8 +83,7 @@ export async function toggleFeatureFlag(
       .from("feature_flags")
       .insert({
         key,
-        enabled: scope === "management" ? enabled : true,
-        driver_enabled: scope === "driver" ? enabled : enabled,
+        enabled,
         description: catalogItem?.description ?? null,
       })
       .select("id")
@@ -98,14 +97,10 @@ export async function toggleFeatureFlag(
     }
 
     flagId = inserted.id;
-  } else {
-    const update = scope === "driver"
-      ? { driver_enabled: enabled }
-      : { enabled };
-
+  } else if (scope === "management") {
     const { error: updateError } = await admin
       .from("feature_flags")
-      .update(update)
+      .update({ enabled })
       .eq("id", flagId);
 
     if (updateError) {
@@ -113,8 +108,33 @@ export async function toggleFeatureFlag(
     }
   }
 
-  // Management/global switches also control the environment gate.
-  // Driver-only switches intentionally leave management and environment state alone.
+  // Driver-only state is stored separately in the existing system_settings
+  // table so management access can never be disabled by a driver switch.
+  if (scope === "driver") {
+    const settingKey = `feature_driver_${key}`;
+    const { error: driverOverrideError } = await admin
+      .from("system_settings")
+      .upsert(
+        {
+          key: settingKey,
+          value: { enabled },
+          category: "feature_flags",
+          description: `Driver access override for ${catalogItem.name}`,
+          updated_by: profile.id,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "key" }
+      );
+
+    if (driverOverrideError) {
+      return {
+        success: false,
+        error: `Could not save driver access state: ${driverOverrideError.message}`,
+      };
+    }
+  }
+
+  // Management/global switches control the actual feature flag and environment gate.
   if (scope === "management" && flagId) {
     const envs = ["development", "preview", "production"] as const;
     const { error: environmentError } = await admin
@@ -175,7 +195,7 @@ export async function toggleFeatureFlag(
     entity_id: flagId,
     old_values:
       scope === "driver"
-        ? { driver_enabled: existingFlag?.driver_enabled ?? null }
+        ? { driver_override: "unknown" }
         : { enabled: existingFlag?.enabled ?? null },
     new_values:
       scope === "driver"
@@ -198,7 +218,10 @@ export async function toggleFeatureFlag(
     enabled,
     scope,
     managementEnabled: scope === "management" ? enabled : existingFlag?.enabled ?? true,
-    driverEnabled: scope === "driver" ? enabled : existingFlag?.driver_enabled ?? enabled,
+    driverEnabled:
+      scope === "driver"
+        ? enabled
+        : existingFlag?.enabled ?? enabled,
   };
 }
 

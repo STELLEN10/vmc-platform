@@ -624,7 +624,6 @@ export type Database = {
           key: string;
           description: string | null;
           enabled: boolean;
-          driver_enabled: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -633,12 +632,10 @@ export type Database = {
           key: string;
           description?: string | null;
           enabled?: boolean;
-          driver_enabled?: boolean;
         };
         Update: {
           description?: string | null;
           enabled?: boolean;
-          driver_enabled?: boolean;
         };
         Relationships: [];
       };

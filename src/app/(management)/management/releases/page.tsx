@@ -2,6 +2,7 @@ import { PageHeading } from "@/components/page-heading";
 import { StatusBadge } from "@/components/status-badge";
 import { requireRole } from "@/lib/auth/authorization";
 import { MANAGEMENT_ROLES } from "@/lib/auth/roles";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { FeatureToggleBoard, type BetaAssignmentData } from "./feature-toggle-board";
 
@@ -17,7 +18,7 @@ export default async function ReleaseControlPage({
   const [{ data: flags }, { data: rawAssignments }] = await Promise.all([
     supabase
       .from("feature_flags")
-      .select("id, key, enabled, driver_enabled, description")
+      .select("id, key, enabled, description")
       .order("key"),
     supabase
       .from("feature_flag_assignments")
@@ -43,10 +44,27 @@ export default async function ReleaseControlPage({
   const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
   const flagMap = new Map((flags ?? []).map((f) => [f.id, f.key]));
 
+  const adminClient = createAdminClient();
+  const { data: driverOverrides } = await adminClient
+    .from("system_settings")
+    .select("key, value")
+    .like("key", "feature_driver_%");
+
+  const driverOverrideMap = new Map<string, boolean>();
+  for (const override of driverOverrides ?? []) {
+    const value = override.value;
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      const enabled = (value as { enabled?: unknown }).enabled;
+      if (typeof enabled === "boolean") {
+        driverOverrideMap.set(override.key, enabled);
+      }
+    }
+  }
+
   const formattedFlags = (flags ?? []).map((flag) => ({
     key: flag.key,
     enabled: flag.enabled,
-    driverEnabled: flag.driver_enabled,
+    driverEnabled: driverOverrideMap.get(`feature_driver_${flag.key}`) ?? flag.enabled,
     description: flag.description,
   }));
 
