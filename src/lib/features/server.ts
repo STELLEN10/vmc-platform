@@ -6,17 +6,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { type FeatureKey, isDriverFeatureKey } from "./catalog";
 
-type RuntimeEnvironment = "development" | "preview" | "production";
-
-function runtimeEnvironment(): RuntimeEnvironment {
-  const configured = process.env.VMC_FEATURE_ENVIRONMENT;
-  if (configured === "development" || configured === "preview" || configured === "production") {
-    return configured;
-  }
-  if (process.env.VERCEL_ENV === "preview") return "preview";
-  return process.env.NODE_ENV === "development" ? "development" : "production";
-}
-
 /**
  * Release Control switches are driver-access switches for driver-facing features.
  * Management access is intentionally independent and remains available.
@@ -68,10 +57,6 @@ export async function hasFeatureAccess(feature: FeatureKey): Promise<boolean> {
     const enabled = (value as { enabled?: unknown }).enabled;
     if (typeof enabled === "boolean") return enabled;
   }
-
-  // Keep this referenced so changing runtime environments remains deliberate;
-  // driver overrides are stored globally and do not vary per deployment.
-  void runtimeEnvironment;
 
   return true;
 }
