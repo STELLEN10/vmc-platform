@@ -98,4 +98,4 @@ There is no public staff or admin registration route. Create the initial adminis
 
 Before production, configure Supabase Auth to match VMC's approved account-provisioning process. Keep public signup out of the VMC UI; use admin-controlled invitations/provisioning in the next phase. Set appropriate Auth redirect URLs for each deployment domain, enable email confirmation and MFA for privileged accounts where policy requires it, and keep the Supabase service-role key only in trusted server-side operational tooling.
 
-V0.5 adds the driver referral and R250 reward workflow. It is deployed behind the existing feature and release controls and should only be enabled after the referral lifecycle is verified in Preview.
+V0.5 adds the driver referral and R250 reward workflow. V0.6 adds the server-side VMC AI assistant, using Groq through a permission-aware tool layer. Both remain behind the existing feature and release controls and should only be enabled after Preview verification.
