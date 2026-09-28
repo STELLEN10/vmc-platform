@@ -75,16 +75,26 @@ export async function hasFeatureAccess(feature: FeatureKey): Promise<boolean> {
   if (environmentRow && environmentRow.enabled === false) return false;
 
   // A feature must belong to an active release when release mappings exist.
+  // Query the two tables separately because the generated Database types do not
+  // declare the release_features -> releases relationship.
   const { data: releaseMappings, error: releaseError } = await admin
     .from("release_features")
-    .select("release_id, releases!inner(status)")
+    .select("release_id")
     .eq("feature_flag_id", flag.id);
 
   if (releaseError) return false;
 
   if (releaseMappings && releaseMappings.length > 0) {
-    const hasActiveRelease = releaseMappings.some(
-      (mapping) => mapping.releases?.status === "active"
+    const releaseIds = releaseMappings.map((mapping) => mapping.release_id);
+    const { data: releases, error: releasesError } = await admin
+      .from("releases")
+      .select("id, status")
+      .in("id", releaseIds);
+
+    if (releasesError) return false;
+
+    const hasActiveRelease = (releases ?? []).some(
+      (release) => release.status === "active"
     );
     if (!hasActiveRelease) return false;
   }
