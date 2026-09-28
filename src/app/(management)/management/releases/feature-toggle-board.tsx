@@ -185,7 +185,7 @@ export function FeatureToggleBoard({
               scope === "driver"
                 ? `${FEATURE_CATALOG[key].name} driver access is now ${nextState ? "ON" : "OFF"}. Management access remains separate.`
                 : `${FEATURE_CATALOG[key].name} management access is now ${nextState ? "ON" : "OFF"}.`,
-          }););
+          });
         }
       } catch (err: unknown) {
         setFlagsState((prev) => ({
