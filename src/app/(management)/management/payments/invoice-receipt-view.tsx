@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { MessageCircle, Mail, Copy, Check, Printer } from "lucide-react";
+import { MessageCircle, Mail, Copy, Check, Printer, ArrowLeft, X } from "lucide-react";
 import { type InvoiceRecord, updateInvoiceStatusAction } from "./invoice-actions";
 import {
   getWhatsAppShareUrl,
@@ -21,6 +21,16 @@ export function InvoiceReceiptModal({
   onStatusChange?: (newStatus: "draft" | "issued" | "paid" | "cancelled") => void;
 }) {
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
 
   function handlePrint() {
     window.print();
@@ -50,6 +60,7 @@ export function InvoiceReceiptModal({
     vatAmount: invoice.vat_amount,
     totalAmount: invoice.total_amount,
     notes: invoice.notes,
+    corridor: "Pretoria to Midrand",
   };
 
   const whatsappUrl = getWhatsAppShareUrl(shareDoc, invoice.recipient_phone);
@@ -63,12 +74,29 @@ export function InvoiceReceiptModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-6 overflow-y-auto">
+    <div
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-6 overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
       {/* Modal Container */}
       <div className="bg-paper border border-line rounded-2xl shadow-2xl w-full max-w-3xl max-h-[95vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Top Control Bar (Hidden during print) */}
-        <div className="p-3 sm:p-4 bg-navy text-white flex flex-wrap items-center justify-between gap-2 print:hidden">
-          <div className="flex items-center gap-2">
+        <div className="p-3 sm:px-5 sm:py-3.5 bg-navy text-white flex flex-wrap items-center justify-between gap-2 print:hidden sticky top-0 z-10 shadow-md">
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold transition-colors cursor-pointer text-xs shadow-sm"
+              title="Return to payments page (Esc)"
+            >
+              <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
+              <span>Back to Payments</span>
+            </button>
+            <span className="text-slate-400">|</span>
             <span className="text-xs font-bold uppercase tracking-wider text-sky-200">
               Preview · {invoice.invoice_number}
             </span>
@@ -130,10 +158,11 @@ export function InvoiceReceiptModal({
             <button
               type="button"
               onClick={onClose}
-              className="text-muted hover:text-white p-1 text-xl font-bold ml-1 cursor-pointer"
+              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
               aria-label="Close"
+              title="Close modal (Esc)"
             >
-              &times;
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -350,6 +379,35 @@ export function InvoiceReceiptModal({
             <div className="flex items-center gap-1.5 text-emerald-800 font-bold">
               <span className="w-2 h-2 rounded-full bg-emerald-600" />
               Verified Official Record
+            </div>
+          </div>
+
+          {/* Bottom Back Button & Action Bar (Hidden during print) */}
+          <div className="mt-6 pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 print:hidden">
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-400 font-extrabold text-xs transition cursor-pointer shadow-sm"
+            >
+              <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
+              <span>Back to Payments</span>
+            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold transition text-xs cursor-pointer shadow-sm"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print / Save PDF</span>
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3.5 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-xs transition cursor-pointer"
+              >
+                Close (Esc)
+              </button>
             </div>
           </div>
         </div>

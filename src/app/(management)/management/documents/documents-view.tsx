@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   FileText,
@@ -11,6 +11,9 @@ import {
   Search,
   ExternalLink,
   Loader2,
+  ArrowLeft,
+  Download,
+  X,
 } from "lucide-react";
 import { createDocumentSignedUrl } from "./actions";
 
@@ -36,6 +39,20 @@ export function DocumentsView({
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [loadingDocId, setLoadingDocId] = useState<string | null>(null);
+  const [activeViewerDoc, setActiveViewerDoc] = useState<{
+    doc: UnifiedDocumentItem;
+    url: string;
+  } | null>(null);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setActiveViewerDoc(null);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const filteredDocs = documents.filter((doc) => {
     if (selectedCategory !== "all" && doc.category !== selectedCategory) {
@@ -60,7 +77,7 @@ export function DocumentsView({
     try {
       const res = await createDocumentSignedUrl(doc.storageBucket, doc.storagePath);
       if (res.success && res.signedUrl) {
-        window.open(res.signedUrl, "_blank");
+        setActiveViewerDoc({ doc, url: res.signedUrl });
       } else {
         alert(res.error || "Unable to generate signed access link.");
       }
@@ -286,6 +303,95 @@ export function DocumentsView({
           </table>
         </div>
       </div>
+
+      {/* In-App Document & PDF Viewer Modal with Prominent Back to Documents Button */}
+      {activeViewerDoc && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-hidden"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setActiveViewerDoc(null);
+            }
+          }}
+        >
+          <div className="bg-white rounded-2xl w-full max-w-5xl h-[92vh] flex flex-col overflow-hidden shadow-2xl border border-neutral-300">
+            {/* Modal Header */}
+            <div className="px-4 py-3 bg-neutral-900 text-white flex flex-wrap items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <button
+                  type="button"
+                  onClick={() => setActiveViewerDoc(null)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs transition cursor-pointer shadow-sm"
+                  title="Return to Documents Center (Esc)"
+                >
+                  <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
+                  <span>Back to Documents</span>
+                </button>
+                <span className="text-neutral-500">|</span>
+                <span className="font-semibold text-xs text-neutral-200 truncate max-w-xs sm:max-w-md">
+                  {activeViewerDoc.doc.fileName}
+                </span>
+                {getCategoryBadge(activeViewerDoc.doc.category)}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href={activeViewerDoc.url}
+                  download={activeViewerDoc.doc.fileName}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-semibold transition"
+                  title="Download File"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Download</span>
+                </a>
+                <a
+                  href={activeViewerDoc.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-semibold transition"
+                  title="Open in new window"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">New Tab</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setActiveViewerDoc(null)}
+                  className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition cursor-pointer"
+                  aria-label="Close"
+                  title="Close (Esc)"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Viewer Body */}
+            <div className="flex-1 bg-neutral-100 relative overflow-hidden flex flex-col">
+              <iframe
+                src={activeViewerDoc.url}
+                title={activeViewerDoc.doc.fileName}
+                className="w-full flex-1 border-0"
+              />
+            </div>
+
+            {/* Modal Bottom Bar */}
+            <div className="px-4 py-2.5 bg-neutral-50 border-t border-neutral-200 flex items-center justify-between text-xs text-neutral-600 shrink-0">
+              <span>Driver: <strong>{activeViewerDoc.doc.driverName}</strong> ({activeViewerDoc.doc.bikeRegistration})</span>
+              <button
+                type="button"
+                onClick={() => setActiveViewerDoc(null)}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-amber-400 font-bold text-xs transition cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>Back to Documents List</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

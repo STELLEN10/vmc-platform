@@ -28,6 +28,7 @@ export function ContractDocumentForm({
   viewUrl,
 }: ContractDocumentFormProps) {
   const router = useRouter();
+  const [showViewer, setShowViewer] = useState(false);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -191,14 +192,13 @@ export function ContractDocumentForm({
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <a
-                href={documentLink}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => setShowViewer(true)}
                 className="button button--secondary py-1 px-3 text-xs"
               >
-                View
-              </a>
+                View PDF
+              </button>
               <button
                 type="button"
                 onClick={() => {
@@ -220,6 +220,66 @@ export function ContractDocumentForm({
               </button>
             </div>
           </div>
+
+          {/* In-App Contract PDF Viewer Modal */}
+          {showViewer && documentLink && (
+            <div
+              className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-hidden"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setShowViewer(false);
+              }}
+            >
+              <div className="bg-white rounded-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden shadow-2xl border border-neutral-300">
+                <div className="px-4 py-3 bg-neutral-900 text-white flex items-center justify-between gap-3 shrink-0">
+                  <div className="flex items-center gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowViewer(false)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs transition cursor-pointer shadow-sm"
+                    >
+                      <span>← Back to Driver</span>
+                    </button>
+                    <span className="text-neutral-500">|</span>
+                    <span className="font-semibold text-xs text-neutral-200 truncate">
+                      {documentFileName || "VMC Rent-to-Own Contract.pdf"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={documentLink}
+                      download={documentFileName || "Contract.pdf"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 text-xs rounded bg-neutral-800 hover:bg-neutral-700 text-white font-semibold"
+                    >
+                      Download
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => setShowViewer(false)}
+                      className="p-1 rounded-lg text-neutral-400 hover:text-white"
+                      aria-label="Close"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+                <div className="flex-1 bg-neutral-100">
+                  <iframe src={documentLink} title="Contract PDF" className="w-full h-full border-0" />
+                </div>
+                <div className="px-4 py-2.5 bg-neutral-50 border-t border-neutral-200 flex justify-between items-center text-xs">
+                  <span className="text-neutral-500">Official VMC Lease Agreement</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowViewer(false)}
+                    className="button button--secondary py-1 px-3 text-xs"
+                  >
+                    ← Back to Page
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex flex-col gap-2">

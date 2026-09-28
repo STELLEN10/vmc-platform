@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { X, Printer, MessageCircle, Mail, Copy, Check, ChevronDown, ChevronUp } from "lucide-react";
+import { X, Printer, MessageCircle, Mail, Copy, Check, ChevronDown, ChevronUp, ArrowLeft } from "lucide-react";
 import type { InvoiceOrQuotation } from "@/lib/finance/invoices";
 import {
   getWhatsAppShareUrl,
@@ -20,6 +20,16 @@ interface InvoicePrintModalProps {
 export function InvoicePrintModal({ isOpen, onClose, doc }: InvoicePrintModalProps) {
   const [copied, setCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
 
   if (!isOpen || !doc) return null;
 
@@ -54,16 +64,29 @@ export function InvoicePrintModal({ isOpen, onClose, doc }: InvoicePrintModalPro
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
       <div className="bg-white rounded-2xl max-w-2xl w-full border border-slate-200 shadow-2xl overflow-hidden my-6">
-        {/* Controls Bar */}
-        <div className="flex flex-wrap items-center justify-between px-4 sm:px-6 py-3 bg-slate-900 text-white text-xs gap-2 print:hidden">
-          <div className="flex items-center gap-2">
-            <span className="font-bold tracking-wider uppercase text-amber-400">
-              VMC / VS Procurement
-            </span>
-            <span className="text-slate-400">|</span>
-            <span className="font-mono text-slate-300">{doc.docNumber}</span>
+        {/* Sticky Controls Bar with Prominent Back Button */}
+        <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between px-4 sm:px-6 py-3 bg-slate-900 text-white text-xs gap-2 print:hidden shadow-md">
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold transition-colors cursor-pointer text-xs shadow-sm"
+              title="Return to the page (Esc)"
+            >
+              <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
+              <span>Back to Invoices</span>
+            </button>
+            <span className="text-slate-500">|</span>
+            <span className="font-mono text-slate-300 font-bold">{doc.docNumber}</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -103,7 +126,8 @@ export function InvoicePrintModal({ isOpen, onClose, doc }: InvoicePrintModalPro
             {/* Print / Save PDF */}
             <button
               onClick={() => window.print()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold transition-colors cursor-pointer text-xs"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold transition-colors cursor-pointer text-xs border border-slate-700"
+              title="Print or Save as PDF"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>PDF</span>
@@ -113,6 +137,7 @@ export function InvoicePrintModal({ isOpen, onClose, doc }: InvoicePrintModalPro
               onClick={onClose}
               className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
               aria-label="Close"
+              title="Close modal (Esc)"
             >
               <X className="w-5 h-5" />
             </button>
@@ -347,6 +372,35 @@ export function InvoicePrintModal({ isOpen, onClose, doc }: InvoicePrintModalPro
           {/* Document Footer */}
           <div className="text-center pt-4 border-t border-slate-100 text-[10px] text-slate-400">
             VS Procurement · Valhalla Motorcycles · Tel: {OFFICIAL_BANK_DETAILS.phone} · Email: {OFFICIAL_BANK_DETAILS.email}
+          </div>
+
+          {/* Bottom Back Button & Action Bar (Hidden during print) */}
+          <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 print:hidden">
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-400 font-extrabold text-xs transition cursor-pointer shadow-sm"
+            >
+              <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
+              <span>Back to Invoices & Quotations</span>
+            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold transition text-xs cursor-pointer shadow-sm"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print / Save PDF</span>
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3.5 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-xs transition cursor-pointer"
+              >
+                Close (Esc)
+              </button>
+            </div>
           </div>
         </div>
       </div>
