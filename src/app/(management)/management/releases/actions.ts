@@ -139,18 +139,23 @@ export async function toggleFeatureFlag(
     const baseVersion = catalogItem.release.split("-")[0];
     const { data: releases, error: releasesError } = await admin
       .from("releases")
-      .select("id, version")
-      .or(`version.eq.${catalogItem.release},version.like.${baseVersion}%`);
+      .select("id, version");
 
     if (releasesError) {
       return { success: false, error: `Could not read releases: ${releasesError.message}` };
     }
 
-    if (releases && releases.length > 0) {
+    const matchingReleases = (releases ?? []).filter(
+      (release) =>
+        release.version === catalogItem.release ||
+        release.version.startsWith(baseVersion)
+    );
+
+    if (matchingReleases.length > 0) {
       const { error: linkError } = await admin
         .from("release_features")
         .upsert(
-          releases.map((release) => ({
+          matchingReleases.map((release) => ({
             release_id: release.id,
             feature_flag_id: flagId,
           })),
