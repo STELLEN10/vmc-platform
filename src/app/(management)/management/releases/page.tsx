@@ -43,6 +43,13 @@ export default async function ReleaseControlPage({
   const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
   const flagMap = new Map((flags ?? []).map((f) => [f.id, f.key]));
 
+  const formattedFlags = (flags ?? []).map((flag) => ({
+    key: flag.key,
+    enabled: flag.enabled,
+    driverEnabled: flag.driver_enabled,
+    description: flag.description,
+  }));
+
   const formattedAssignments: BetaAssignmentData[] = (rawAssignments ?? []).map((a) => {
     const prof = a.profile_id ? profileMap.get(a.profile_id) : null;
     return {
@@ -100,7 +107,7 @@ export default async function ReleaseControlPage({
 
       {/* Main Interactive Feature Toggle Board with Testing Accounts */}
       <FeatureToggleBoard
-        initialFlags={flags ?? []}
+        initialFlags={formattedFlags}
         assignments={formattedAssignments}
         isAdmin={profile.role === "admin"}
       />
