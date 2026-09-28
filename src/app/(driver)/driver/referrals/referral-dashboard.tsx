@@ -22,42 +22,36 @@ export function ReferralDashboard({ referrals: initialReferrals }: { referrals: 
   const [copied, setCopied] = useState(false);
   const [sharing, setSharing] = useState(false);
 
-  const active = referrals.find((referral) =>
-    !["cancelled", "rewarded"].includes(referral.status)
-  );
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const referralUrl = active ? `${baseUrl}/driver/register?ref=${active.referralCode}` : "";
+  const active = referrals.find((referral) => !["cancelled", "rewarded"].includes(referral.status));
 
-  const ensureCode = () => {
-    if (active) return active;
-    let created: DriverReferralSummary | null = null;
+  const handleCreateCode = () => {
     startTransition(async () => {
       try {
         const result = await generateReferralCode();
-        created = {
-          id: result.referralId,
-          referralCode: result.referralCode,
-          status: "created",
-          referredDriverId: null,
-          qualificationNote: null,
-          qualifiedAt: null,
-          createdAt: new Date().toISOString(),
-          rewardAmount: null,
-          rewardStatus: null,
-          paidAt: null,
-        };
-        setReferrals((current) => [created!, ...current]);
+        setReferrals((current) => [
+          {
+            id: result.referralId,
+            referralCode: result.referralCode,
+            status: "created",
+            referredDriverId: null,
+            qualificationNote: null,
+            qualifiedAt: null,
+            createdAt: new Date().toISOString(),
+            rewardAmount: null,
+            rewardStatus: null,
+            paidAt: null,
+          },
+          ...current,
+        ]);
       } catch (error) {
         window.alert(error instanceof Error ? error.message : "Unable to create your referral code.");
       }
     });
-    return created;
   };
 
   const copyLink = async () => {
-    const current = active ?? ensureCode();
-    if (!current) return;
-    const url = `${window.location.origin}/driver/register?ref=${current.referralCode}`;
+    if (!active) return;
+    const url = `${window.location.origin}/driver/register?ref=${active.referralCode}`;
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -68,9 +62,8 @@ export function ReferralDashboard({ referrals: initialReferrals }: { referrals: 
   };
 
   const shareLink = async () => {
-    const current = active ?? ensureCode();
-    if (!current) return;
-    const url = `${window.location.origin}/driver/register?ref=${current.referralCode}`;
+    if (!active) return;
+    const url = `${window.location.origin}/driver/register?ref=${active.referralCode}`;
     setSharing(true);
     try {
       if (navigator.share) {
@@ -100,24 +93,37 @@ export function ReferralDashboard({ referrals: initialReferrals }: { referrals: 
           <div className="flex min-h-11 flex-1 items-center rounded-lg border border-white/15 bg-black/20 px-3 font-mono text-sm text-white">
             {active ? active.referralCode : "Create your referral code"}
           </div>
-          <button
-            type="button"
-            onClick={copyLink}
-            disabled={isPending}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-neutral-900 disabled:opacity-60"
-          >
-            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            {copied ? "Copied" : "Copy link"}
-          </button>
-          <button
-            type="button"
-            onClick={shareLink}
-            disabled={isPending || sharing}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white disabled:opacity-60"
-          >
-            <Share2 className="h-4 w-4" />
-            Share
-          </button>
+          {active ? (
+            <>
+              <button
+                type="button"
+                onClick={copyLink}
+                disabled={isPending}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-neutral-900 disabled:opacity-60"
+              >
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied ? "Copied" : "Copy link"}
+              </button>
+              <button
+                type="button"
+                onClick={shareLink}
+                disabled={isPending || sharing}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                <Share2 className="h-4 w-4" />
+                Share
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={handleCreateCode}
+              disabled={isPending}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-neutral-900 disabled:opacity-60"
+            >
+              Create referral code
+            </button>
+          )}
         </div>
       </section>
 
