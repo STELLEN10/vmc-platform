@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireRole } from "@/lib/auth/authorization";
-import { MANAGEMENT_ROLES, ADMIN_ROLES } from "@/lib/auth/roles";
+import { ADMIN_ROLES } from "@/lib/auth/roles";
 import { FEATURE_CATALOG, type FeatureKey, isFeatureKey } from "@/lib/features/catalog";
 import { setFeatureFlagState, bulkSetFeatureFlagsState } from "@/lib/features/store";
 import { createClient } from "@/lib/supabase/server";
@@ -108,18 +108,23 @@ export async function toggleFeatureFlag(key: string, enabled: boolean) {
     );
   }
 
+  // 4. Update the persistent local feature-flags state store
+  setFeatureFlagState(key as FeatureKey, enabled);
+
   revalidateAllFeaturePages();
   return { success: true, enabled };
 }
 
 export async function bulkSetFeatureFlags(keys: string[], enabled: boolean) {
   await requireRole(ADMIN_ROLES);
-  for (const key of keys) {
-    if (isFeatureKey(key)) {
-      if (key === "core_platform" && !enabled) continue;
-      await toggleFeatureFlag(key, enabled);
-    }
+  const validKeys = keys.filter(isFeatureKey);
+  const updates: Partial<Record<FeatureKey, boolean>> = {};
+  for (const key of validKeys) {
+    if (key === "core_platform" && !enabled) continue;
+    await toggleFeatureFlag(key, enabled);
+    updates[key] = enabled;
   }
+  bulkSetFeatureFlagsState(updates);
   revalidateAllFeaturePages();
   return { success: true };
 }

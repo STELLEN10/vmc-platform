@@ -45,27 +45,6 @@ export default async function DriverLayout({ children }: { children: ReactNode }
     { href: "/driver/settings", label: "Settings" },
   ];
 
-  const [hasEmergency, hasMaintenance, hasInventory, hasServices, hasPayments] = await Promise.all([
-    hasFeatureAccess("emergency_bike_support"),
-    hasFeatureAccess("new_maintenance"),
-    hasFeatureAccess("parts_inventory"),
-    hasFeatureAccess("service_requests"),
-    hasFeatureAccess("new_payment_engine"),
-  ]);
-
-  const driverNavigation = [
-    { href: "/driver", label: "Overview" },
-    ...(hasEmergency ? [{ href: "/driver/emergency", label: "Emergency" }] : []),
-    ...(hasMaintenance ? [{ href: "/driver/maintenance", label: "Maintenance" }] : []),
-    ...(hasInventory ? [{ href: "/driver/inventory", label: "Parts" }] : []),
-    ...(hasServices ? [{ href: "/driver/services", label: "Service booking" }] : []),
-    ...(hasPayments ? [{ href: "/driver/payments", label: "Payments" }] : []),
-    { href: "/driver/profile", label: "My profile" },
-    { href: "/driver/bike", label: "My motorcycle" },
-    { href: "/driver/onboarding", label: "My onboarding" },
-    { href: "/driver/settings", label: "Settings" },
-  ];
-
   return (
     <AppShell area="VMC Driver" navigation={driverNavigation} profile={profile}>
       {children}

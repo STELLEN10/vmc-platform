@@ -2,7 +2,7 @@ import "server-only";
 
 import fs from "node:fs";
 import path from "node:path";
-import { FEATURE_CATALOG, type FeatureKey, isFeatureKey } from "./catalog";
+import { type FeatureKey, isFeatureKey } from "./catalog";
 
 const STORE_PATH = path.join(process.cwd(), "data", "feature-flags-state.json");
 
