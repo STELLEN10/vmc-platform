@@ -7,6 +7,7 @@ import { MANAGEMENT_ROLES } from "@/lib/auth/roles";
 import type { DriverOnboardingStatus } from "@/lib/database.types";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { claimReferralFromSignup } from "@/lib/referrals/server";
 import { recordAuditEvent } from "@/lib/audit/server";
 
 const managementStatuses: DriverOnboardingStatus[] = [
@@ -68,6 +69,7 @@ export async function reviewDriverOnboarding(formData: FormData): Promise<{ erro
         { profile_id: profileId, status: "active", start_date: today },
         { onConflict: "profile_id" }
       );
+      await claimReferralFromSignup(profileId);
     } catch (upsertError) {
       console.error("Could not ensure driver operational record:", upsertError);
     }
