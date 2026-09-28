@@ -46,7 +46,7 @@ export function CreateInvoiceModal({
   const [dueDate, setDueDate] = useState(defaultDueDate);
   const [vatRate, setVatRate] = useState<number>(15);
   const [notes, setNotes] = useState(
-    "Standard Valhalla Motorcycles terms: Payments must be transferred via EFT using your Invoice Reference number. Proof must be submitted via the VMC rider app."
+    "Official EFT Payment Details: Bank Name Capitec | Account Holder VS Procurement | Account No 10976145 | Account Type Business Account | Branch Code 25854. Contact: info@vsprocurement.co.za · +27 76 668 1879."
   );
 
   const [items, setItems] = useState<InvoiceItem[]>([

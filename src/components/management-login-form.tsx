@@ -88,7 +88,7 @@ export function ManagementLoginForm() {
     <form className="login-form" onSubmit={handleSubmit}>
       <label>
         Work email address
-        <input name="email" type="email" autoComplete="email" placeholder="staff@vmc.co.za" required />
+        <input name="email" type="email" autoComplete="email" placeholder="info@vsprocurement.co.za" required />
       </label>
       <label>
         Password

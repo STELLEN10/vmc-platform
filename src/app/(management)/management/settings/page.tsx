@@ -39,7 +39,7 @@ export default async function ManagementSettingsPage() {
     },
     {
       key: "emergency_dispatch_hotline",
-      value: "+27 12 555 0199",
+      value: "+27 76 668 1879",
       category: "safety",
       description: "Dedicated 24/7 road assistance and medical dispatcher telephone number.",
       updated_at: new Date().toISOString(),

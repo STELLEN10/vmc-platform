@@ -16,6 +16,8 @@ import {
   ArrowRight,
   Printer,
   Trash2,
+  MessageCircle,
+  Mail,
 } from "lucide-react";
 import {
   reviewFinancePayment,
@@ -28,6 +30,7 @@ import { triggerPaymentReminders } from "../notifications/actions";
 import { CreateInvoiceModal } from "./invoice-modal";
 import { InvoicePrintModal } from "./invoice-print-modal";
 import type { InvoiceOrQuotation, InvoiceStatus } from "@/lib/finance/invoices";
+import { getWhatsAppShareUrl, getEmailShareUrl } from "@/lib/finance/share";
 
 export type FinanceContractSummary = {
   contractId: string;
@@ -594,6 +597,44 @@ export function FinanceView({
                           {/* Actions */}
                           <td className="px-4 py-3 text-right">
                             <div className="inline-flex items-center justify-end gap-1.5">
+                              <a
+                                href={getWhatsAppShareUrl({
+                                  type: inv.type,
+                                  docNumber: inv.docNumber,
+                                  recipientName: inv.driverName,
+                                  recipientPhone: inv.driverPhone,
+                                  issueDate: inv.issueDate,
+                                  dueDate: inv.dueDate,
+                                  items: inv.items,
+                                  subtotal: inv.subtotal,
+                                  totalAmount: inv.totalAmount,
+                                  notes: inv.notes,
+                                }, inv.driverPhone)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1 rounded text-emerald-700 hover:bg-emerald-50 transition-colors"
+                                title="Share to WhatsApp"
+                              >
+                                <MessageCircle className="w-3.5 h-3.5" />
+                              </a>
+                              <a
+                                href={getEmailShareUrl({
+                                  type: inv.type,
+                                  docNumber: inv.docNumber,
+                                  recipientName: inv.driverName,
+                                  recipientEmail: inv.driverEmail,
+                                  issueDate: inv.issueDate,
+                                  dueDate: inv.dueDate,
+                                  items: inv.items,
+                                  subtotal: inv.subtotal,
+                                  totalAmount: inv.totalAmount,
+                                  notes: inv.notes,
+                                }, inv.driverEmail)}
+                                className="p-1 rounded text-sky-700 hover:bg-sky-50 transition-colors"
+                                title="Share via Email"
+                              >
+                                <Mail className="w-3.5 h-3.5" />
+                              </a>
                               <button
                                 type="button"
                                 onClick={() => setViewingDoc(inv)}

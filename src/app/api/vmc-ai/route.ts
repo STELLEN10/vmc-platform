@@ -138,10 +138,14 @@ SCHEDULE OF CHARGES (ZAR):
 • Subtotal: R705.00
 • Total Due: R705.00
 
-PAYMENT DETAILS:
-Bank: Standard Bank
-Account Name: Valhalla Motorcycles (Pty) Ltd
-Reference: Use your Driver ID or Invoice Number
+PAYMENT DETAILS (EFT):
+Bank Name: Capitec
+Account Holder: VS Procurement
+Account No: 10976145
+Account Type: Business Account
+Branch Code: 25854
+Payment Reference: Use your Invoice Number or Driver Reference
+Contact: info@vsprocurement.co.za · +27 76 668 1879
 Proof Submission: Upload payment slip under Payments > Upload Proof.`;
   }
 

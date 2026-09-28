@@ -19,7 +19,7 @@ export default async function DriverRegistrationPage({ searchParams }: DriverReg
           <h1>Create your driver account.</h1>
           <p>Create your VMC Driver account and continue with your rider onboarding.</p>
         </div>
-        <p className="driver-auth-page__footer">VMC · Pretoria–Midrand · <a href="tel:+27766681879">+27 76 668 1879</a></p>
+        <p className="driver-auth-page__footer">VMC · Pretoria–Midrand · <a href="tel:+27766681879">+27 76 668 1879</a> · <a href="mailto:info@vsprocurement.co.za">info@vsprocurement.co.za</a></p>
       </section>
       <section className="driver-auth-page__form">
         <div className="auth-form-wrap">

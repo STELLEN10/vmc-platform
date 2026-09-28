@@ -1,9 +1,18 @@
 -- VMC Platform: secure application foundation
 -- Apply with the Supabase CLI or SQL editor before using authenticated routes.
 
-create type public.app_role as enum ('admin', 'staff', 'driver');
-create type public.driver_status as enum ('active', 'inactive', 'suspended');
-create type public.bike_status as enum ('available', 'assigned', 'maintenance', 'inactive');
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'app_role') then
+    create type public.app_role as enum ('admin', 'staff', 'driver');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'driver_status') then
+    create type public.driver_status as enum ('active', 'inactive', 'suspended');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'bike_status') then
+    create type public.bike_status as enum ('available', 'assigned', 'maintenance', 'inactive');
+  end if;
+end $$;
 
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,

@@ -4,18 +4,45 @@
 alter type public.bike_status add value if not exists 'repair';
 alter type public.bike_status add value if not exists 'retired';
 
-create type public.bike_assignment_status as enum ('assigned', 'returned', 'ended');
-create type public.contract_status as enum ('draft', 'active', 'completed', 'cancelled', 'suspended');
-create type public.payment_status as enum ('upcoming', 'due', 'submitted', 'awaiting_verification', 'verified', 'rejected', 'overdue');
-create type public.payment_record_source as enum ('scheduled', 'historical', 'adjustment');
-create type public.notification_channel as enum ('in_app');
-create type public.notification_status as enum ('unread', 'read');
-create type public.bike_report_category as enum ('engine', 'brakes', 'tyres', 'electrical', 'battery', 'lights', 'chain', 'suspension', 'body', 'other', 'emergency');
-create type public.bike_report_severity as enum ('low', 'medium', 'high', 'emergency');
-create type public.bike_report_status as enum ('reported', 'under_review', 'awaiting_part', 'repair_scheduled', 'in_repair', 'resolved', 'closed');
-create type public.inventory_movement_type as enum ('opening_balance', 'adjustment', 'received', 'used', 'returned');
-create type public.release_channel as enum ('stable', 'beta');
-create type public.release_status as enum ('draft', 'testing', 'active', 'paused', 'rolled_back', 'retired');
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'bike_assignment_status') then
+    create type public.bike_assignment_status as enum ('assigned', 'returned', 'ended');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'contract_status') then
+    create type public.contract_status as enum ('draft', 'active', 'completed', 'cancelled', 'suspended');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'payment_status') then
+    create type public.payment_status as enum ('upcoming', 'due', 'submitted', 'awaiting_verification', 'verified', 'rejected', 'overdue');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'payment_record_source') then
+    create type public.payment_record_source as enum ('scheduled', 'historical', 'adjustment');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'notification_channel') then
+    create type public.notification_channel as enum ('in_app');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'notification_status') then
+    create type public.notification_status as enum ('unread', 'read');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'bike_report_category') then
+    create type public.bike_report_category as enum ('engine', 'brakes', 'tyres', 'electrical', 'battery', 'lights', 'chain', 'suspension', 'body', 'other', 'emergency');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'bike_report_severity') then
+    create type public.bike_report_severity as enum ('low', 'medium', 'high', 'emergency');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'bike_report_status') then
+    create type public.bike_report_status as enum ('reported', 'under_review', 'awaiting_part', 'repair_scheduled', 'in_repair', 'resolved', 'closed');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'inventory_movement_type') then
+    create type public.inventory_movement_type as enum ('opening_balance', 'adjustment', 'received', 'used', 'returned');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'release_channel') then
+    create type public.release_channel as enum ('stable', 'beta');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'release_status') then
+    create type public.release_status as enum ('draft', 'testing', 'active', 'paused', 'rolled_back', 'retired');
+  end if;
+end $$;
 
 create table public.bike_assignments (
   id uuid primary key default gen_random_uuid(),

@@ -1,17 +1,22 @@
 -- Driver self-registration support. Auth users remain created by Supabase Auth;
 -- public clients never receive a database role or a privileged API key.
 
-create type public.driver_onboarding_status as enum (
-  'pending',
-  'incomplete',
-  'submitted',
-  'under_review',
-  'approved',
-  'active',
-  'changes_requested',
-  'rejected',
-  'suspended'
-);
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'driver_onboarding_status') then
+    create type public.driver_onboarding_status as enum (
+      'pending',
+      'incomplete',
+      'submitted',
+      'under_review',
+      'approved',
+      'active',
+      'changes_requested',
+      'rejected',
+      'suspended'
+    );
+  end if;
+end $$;
 
 create table public.driver_onboardings (
   profile_id uuid primary key references public.profiles(id) on delete cascade,

@@ -1,7 +1,14 @@
 "use client";
 
-import { X, Printer } from "lucide-react";
+import { useState } from "react";
+import { X, Printer, MessageCircle, Mail, Copy, Check } from "lucide-react";
 import type { InvoiceOrQuotation } from "@/lib/finance/invoices";
+import {
+  getWhatsAppShareUrl,
+  getEmailShareUrl,
+  buildWhatsAppMessage,
+  OFFICIAL_BANK_DETAILS,
+} from "@/lib/finance/share";
 
 interface InvoicePrintModalProps {
   isOpen: boolean;
@@ -10,33 +17,99 @@ interface InvoicePrintModalProps {
 }
 
 export function InvoicePrintModal({ isOpen, onClose, doc }: InvoicePrintModalProps) {
+  const [copied, setCopied] = useState(false);
+
   if (!isOpen || !doc) return null;
 
   const isQuo = doc.type === "quotation";
 
+  const shareDoc = {
+    type: doc.type,
+    docNumber: doc.docNumber,
+    recipientName: doc.driverName,
+    recipientEmail: doc.driverEmail,
+    recipientPhone: doc.driverPhone,
+    bikeReference: doc.bikeRegistration,
+    issueDate: doc.issueDate,
+    dueDate: doc.dueDate,
+    items: doc.items,
+    subtotal: doc.subtotal,
+    vatAmount: doc.taxAmount,
+    totalAmount: doc.totalAmount,
+    notes: doc.notes,
+    paymentInstructions: doc.paymentInstructions,
+  };
+
+  const whatsappUrl = getWhatsAppShareUrl(shareDoc, doc.driverPhone);
+  const emailUrl = getEmailShareUrl(shareDoc, doc.driverEmail);
+
+  function handleCopy() {
+    const text = buildWhatsAppMessage(shareDoc);
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl max-w-2xl w-full border border-slate-200 shadow-2xl overflow-hidden my-6">
         {/* Controls Bar */}
-        <div className="flex items-center justify-between px-6 py-3 bg-slate-900 text-white text-xs print:hidden">
+        <div className="flex flex-wrap items-center justify-between px-4 sm:px-6 py-3 bg-slate-900 text-white text-xs gap-2 print:hidden">
           <div className="flex items-center gap-2">
             <span className="font-bold tracking-wider uppercase text-amber-400">
-              Valhalla Motorcycles Document Viewer
+              VMC / VS Procurement
             </span>
             <span className="text-slate-400">|</span>
             <span className="font-mono text-slate-300">{doc.docNumber}</span>
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* WhatsApp Share Button */}
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-colors cursor-pointer text-xs"
+              title="Share document details directly to WhatsApp"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              <span>WhatsApp</span>
+            </a>
+
+            {/* Email Share Button */}
+            <a
+              href={emailUrl}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-bold transition-colors cursor-pointer text-xs"
+              title="Share document details via email"
+            >
+              <Mail className="w-3.5 h-3.5" />
+              <span>Email</span>
+            </a>
+
+            {/* Copy Summary Button */}
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold transition-colors cursor-pointer text-xs"
+              title="Copy formatted summary to clipboard"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copied ? "Copied!" : "Copy"}</span>
+            </button>
+
+            {/* Print / Save PDF */}
             <button
               onClick={() => window.print()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold transition-colors cursor-pointer text-xs"
             >
               <Printer className="w-3.5 h-3.5" />
-              Print / Save PDF
+              <span>PDF</span>
             </button>
+
             <button
               onClick={onClose}
               className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              aria-label="Close"
             >
               <X className="w-5 h-5" />
             </button>
@@ -44,26 +117,37 @@ export function InvoicePrintModal({ isOpen, onClose, doc }: InvoicePrintModalPro
         </div>
 
         {/* Printable Paper Document */}
-        <div className="p-8 sm:p-10 space-y-6 text-slate-800 bg-white" id="printable-invoice">
+        <div className="p-6 sm:p-10 space-y-6 text-slate-800 bg-white" id="printable-invoice">
           {/* Document Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
             <div>
               <div className="flex items-center gap-2">
-                <span className="w-7 h-7 rounded-lg bg-amber-600 flex items-center justify-center text-white font-extrabold text-sm tracking-wider">
+                <span className="w-8 h-8 rounded-lg bg-amber-600 flex items-center justify-center text-white font-extrabold text-sm tracking-wider">
                   VMC
                 </span>
-                <span className="font-extrabold text-lg text-slate-900 tracking-tight">
-                  VALHALLA MOTORCYCLES
-                </span>
+                <div>
+                  <span className="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight block leading-tight">
+                    VALHALLA MOTORCYCLES
+                  </span>
+                  <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider block">
+                    VS PROCUREMENT
+                  </span>
+                </div>
               </div>
-              <p className="text-[11px] text-slate-500 mt-1 leading-snug">
-                Fleet Operations & Maintenance Hub<br />
+              <p className="text-[11px] text-slate-500 mt-2 leading-snug">
+                Fleet Operations & Procurement Hub<br />
                 Pretoria & Midrand · South Africa<br />
-                support@valhallamotorcycles.com
+                <a href={`mailto:${OFFICIAL_BANK_DETAILS.email}`} className="text-slate-600 hover:underline">
+                  {OFFICIAL_BANK_DETAILS.email}
+                </a>{" "}
+                ·{" "}
+                <a href={`tel:${OFFICIAL_BANK_DETAILS.phone.replace(/\s+/g, "")}`} className="text-slate-600 hover:underline">
+                  {OFFICIAL_BANK_DETAILS.phone}
+                </a>
               </p>
             </div>
 
-            <div className="text-right sm:text-right">
+            <div className="text-left sm:text-right">
               <span
                 className={`inline-block px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider mb-1.5 ${
                   isQuo
@@ -81,6 +165,31 @@ export function InvoicePrintModal({ isOpen, onClose, doc }: InvoicePrintModalPro
               <p className="text-[11px] text-slate-500 mt-1">
                 Status: <strong className="text-slate-800 uppercase">{doc.status}</strong>
               </p>
+            </div>
+          </div>
+
+          {/* Quick In-Document Share Bar (visible on mobile / inside preview, hidden during print) */}
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs print:hidden">
+            <span className="text-slate-600 font-medium">
+              Share this {isQuo ? "quotation" : "invoice"} with client or records:
+            </span>
+            <div className="flex items-center gap-2">
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+              >
+                <MessageCircle className="w-3 h-3" />
+                Share to WhatsApp
+              </a>
+              <a
+                href={emailUrl}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-sky-600 hover:bg-sky-700 text-white font-bold"
+              >
+                <Mail className="w-3 h-3" />
+                Share to Email
+              </a>
             </div>
           </div>
 
@@ -167,15 +276,40 @@ export function InvoicePrintModal({ isOpen, onClose, doc }: InvoicePrintModalPro
             </div>
           </div>
 
-          {/* Payment Instructions & Terms */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+          {/* Official Capitec Bank Details & Payment Instructions */}
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-3">
             <div>
-              <p className="font-bold text-slate-800 m-0 mb-1">Payment Instructions & Banking:</p>
-              <p className="text-slate-600 font-mono text-[11px] m-0">
-                {doc.paymentInstructions ||
-                  "Valhalla Motorcycles Pty Ltd | FNB Corporate | Acc: 62819283749 | Branch: 250655"}
+              <p className="font-bold text-slate-900 m-0 mb-1.5 text-[11px] uppercase tracking-wider text-amber-900">
+                Official Banking Details (EFT)
               </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-800 font-mono text-xs bg-white p-3 rounded-lg border border-slate-200">
+                <div>
+                  <span className="text-slate-500 text-[11px] block font-sans">Bank Name:</span>
+                  <strong className="text-slate-950 font-bold">{OFFICIAL_BANK_DETAILS.bankName}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 text-[11px] block font-sans">Account Holder:</span>
+                  <strong className="text-slate-950 font-bold">{OFFICIAL_BANK_DETAILS.accountHolder}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 text-[11px] block font-sans">Account No:</span>
+                  <strong className="text-slate-950 font-bold tracking-wider">{OFFICIAL_BANK_DETAILS.accountNumber}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 text-[11px] block font-sans">Account Type:</span>
+                  <strong className="text-slate-950 font-bold">{OFFICIAL_BANK_DETAILS.accountType}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 text-[11px] block font-sans">Branch Code:</span>
+                  <strong className="text-slate-950 font-bold">{OFFICIAL_BANK_DETAILS.branchCode}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 text-[11px] block font-sans">Payment Reference:</span>
+                  <strong className="text-emerald-700 font-bold">{doc.docNumber}</strong>
+                </div>
+              </div>
             </div>
+
             {doc.notes && (
               <div className="pt-2 border-t border-slate-200">
                 <p className="font-bold text-slate-800 m-0">Notes:</p>
@@ -186,7 +320,7 @@ export function InvoicePrintModal({ isOpen, onClose, doc }: InvoicePrintModalPro
 
           {/* Document Footer */}
           <div className="text-center pt-4 border-t border-slate-100 text-[10px] text-slate-400">
-            Thank you for riding with Valhalla Motorcycles. Authorized official document.
+            VS Procurement · Valhalla Motorcycles · Tel: {OFFICIAL_BANK_DETAILS.phone} · Email: {OFFICIAL_BANK_DETAILS.email}
           </div>
         </div>
       </div>

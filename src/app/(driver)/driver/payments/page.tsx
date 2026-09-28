@@ -212,16 +212,16 @@ export default async function DriverPaymentsPage() {
               <p className="text-xs text-muted mt-2">
                 Make your weekly EFT or cash deposit using your unique reference:
               </p>
-              <div className="mt-3 p-3 bg-paper border border-line rounded-lg text-xs font-mono">
-                Bank: First National Bank
-                <br />
-                Account: Valhalla Motorcycles
-                <br />
-                Account No: 62819283749
-                <br />
-                Branch: 250655
-                <br />
-                Reference: VMC-{contracts[0]?.id?.slice(0, 6).toUpperCase()}
+              <div className="mt-3 p-3 bg-paper border border-line rounded-lg text-xs font-mono space-y-1">
+                <div>Bank Name: <strong>Capitec</strong></div>
+                <div>Account Holder: <strong>VS Procurement</strong></div>
+                <div>Account No: <strong>10976145</strong></div>
+                <div>Account Type: <strong>Business Account</strong></div>
+                <div>Branch Code: <strong>25854</strong></div>
+                <div>Reference: <strong>VMC-{contracts[0]?.id?.slice(0, 6).toUpperCase()}</strong></div>
+                <div className="pt-1.5 border-t border-line text-muted font-sans text-[11px]">
+                  Enquiries: <a href="mailto:info@vsprocurement.co.za" className="text-action hover:underline">info@vsprocurement.co.za</a> · <a href="tel:+27766681879" className="text-action hover:underline">+27 76 668 1879</a>
+                </div>
               </div>
             </section>
           </aside>

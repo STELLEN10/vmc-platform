@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, X, Eye } from "lucide-react";
+import { Check, X, Eye, MessageCircle, Mail } from "lucide-react";
 import { driverRespondToQuotation } from "./actions";
 import { InvoicePrintModal } from "@/app/(management)/management/finance/invoice-print-modal";
 import type { InvoiceOrQuotation } from "@/lib/finance/invoices";
+import { getWhatsAppShareUrl, getEmailShareUrl } from "@/lib/finance/share";
 
 interface DriverInvoicesSectionProps {
   invoices: InvoiceOrQuotation[];
@@ -141,15 +142,58 @@ export function DriverInvoicesSection({ invoices }: DriverInvoicesSectionProps) 
               </div>
 
               {/* Actions */}
-              <div className="mt-4 pt-3 border-t border-slate-200/80 flex items-center justify-between gap-2">
-                <button
-                  type="button"
-                  onClick={() => setViewingDoc(doc)}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-slate-700 hover:text-navy cursor-pointer"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  View Details
-                </button>
+              <div className="mt-4 pt-3 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setViewingDoc(doc)}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-slate-700 hover:text-navy cursor-pointer"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    View Details
+                  </button>
+
+                  <div className="flex items-center gap-1 border-l border-slate-200 pl-2">
+                    <a
+                      href={getWhatsAppShareUrl({
+                        type: doc.type,
+                        docNumber: doc.docNumber,
+                        recipientName: doc.driverName,
+                        recipientPhone: doc.driverPhone,
+                        issueDate: doc.issueDate,
+                        dueDate: doc.dueDate,
+                        items: doc.items,
+                        subtotal: doc.subtotal,
+                        totalAmount: doc.totalAmount,
+                        notes: doc.notes,
+                      }, doc.driverPhone)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1 rounded text-emerald-700 hover:bg-emerald-50 transition-colors"
+                      title="Share to WhatsApp"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                    </a>
+                    <a
+                      href={getEmailShareUrl({
+                        type: doc.type,
+                        docNumber: doc.docNumber,
+                        recipientName: doc.driverName,
+                        recipientEmail: doc.driverEmail,
+                        issueDate: doc.issueDate,
+                        dueDate: doc.dueDate,
+                        items: doc.items,
+                        subtotal: doc.subtotal,
+                        totalAmount: doc.totalAmount,
+                        notes: doc.notes,
+                      }, doc.driverEmail)}
+                      className="p-1 rounded text-sky-700 hover:bg-sky-50 transition-colors"
+                      title="Share via Email"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </div>
 
                 {isQuo && doc.status === "sent" && (
                   <div className="flex items-center gap-1.5">

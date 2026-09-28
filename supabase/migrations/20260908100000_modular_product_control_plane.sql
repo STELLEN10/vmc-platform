@@ -1,21 +1,36 @@
 -- VMC modular product control plane. Future product domains are present but
 -- remain inaccessible until an administrator enables their deployed feature.
 
-create type public.feature_environment as enum ('development', 'preview', 'production');
-create type public.application_status as enum ('draft', 'submitted', 'ai_check', 'human_review', 'changes_requested', 'approved', 'rejected', 'scheduled', 'completed');
-create type public.service_area_status as enum ('within_service_area', 'outside_service_area', 'needs_review');
-create type public.document_status as enum ('uploaded', 'ai_pending', 'ai_checked', 'human_review', 'accepted', 'rejected');
-create type public.referral_status as enum ('created', 'applied', 'qualified', 'reward_pending', 'rewarded', 'cancelled');
-create type public.reminder_status as enum ('scheduled', 'sent', 'cancelled', 'failed');
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'feature_environment') then
+    create type public.feature_environment as enum ('development', 'preview', 'production');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'application_status') then
+    create type public.application_status as enum ('draft', 'submitted', 'ai_check', 'human_review', 'changes_requested', 'approved', 'rejected', 'scheduled', 'completed');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'service_area_status') then
+    create type public.service_area_status as enum ('within_service_area', 'outside_service_area', 'needs_review');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'document_status') then
+    create type public.document_status as enum ('uploaded', 'ai_pending', 'ai_checked', 'human_review', 'accepted', 'rejected');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'referral_status') then
+    create type public.referral_status as enum ('created', 'applied', 'qualified', 'reward_pending', 'rewarded', 'cancelled');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'reminder_status') then
+    create type public.reminder_status as enum ('scheduled', 'sent', 'cancelled', 'failed');
+  end if;
+end $$;
 
-create table public.release_features (
+create table if not exists public.release_features (
   release_id uuid not null references public.releases(id) on delete cascade,
   feature_flag_id uuid not null references public.feature_flags(id) on delete cascade,
   created_at timestamptz not null default now(),
   primary key (release_id, feature_flag_id)
 );
 
-create table public.feature_flag_environments (
+create table if not exists public.feature_flag_environments (
   feature_flag_id uuid not null references public.feature_flags(id) on delete cascade,
   environment public.feature_environment not null,
   enabled boolean not null default false,
@@ -25,7 +40,7 @@ create table public.feature_flag_environments (
   primary key (feature_flag_id, environment)
 );
 
-create table public.feature_flag_assignments (
+create table if not exists public.feature_flag_assignments (
   id uuid primary key default gen_random_uuid(),
   feature_flag_id uuid not null references public.feature_flags(id) on delete cascade,
   profile_id uuid references public.profiles(id) on delete cascade,
@@ -42,7 +57,7 @@ alter table public.release_events add column if not exists previous_value jsonb;
 alter table public.release_events add column if not exists new_value jsonb;
 alter table public.release_events add column if not exists metadata jsonb not null default '{}'::jsonb;
 
-create table public.driver_applications (
+create table if not exists public.driver_applications (
   id uuid primary key default gen_random_uuid(),
   profile_id uuid not null references public.profiles(id) on delete restrict,
   status public.application_status not null default 'draft',
@@ -62,9 +77,9 @@ create table public.driver_applications (
   constraint application_platforms_known check (delivery_platforms <@ array['uber_eats', 'checkers_sixty60', 'mr_d', 'takealot']::text[]),
   unique (profile_id)
 );
-create index driver_applications_status_created_idx on public.driver_applications(status, created_at desc);
+create index if not exists driver_applications_status_created_idx on public.driver_applications(status, created_at desc);
 
-create table public.application_documents (
+create table if not exists public.application_documents (
   id uuid primary key default gen_random_uuid(),
   application_id uuid not null references public.driver_applications(id) on delete cascade,
   document_type text not null check (document_type in ('identity_document', 'driver_licence', 'proof_of_address', 'other')),
@@ -81,9 +96,9 @@ create table public.application_documents (
   updated_at timestamptz not null default now(),
   unique (storage_bucket, storage_path)
 );
-create index application_documents_application_idx on public.application_documents(application_id, created_at desc);
+create index if not exists application_documents_application_idx on public.application_documents(application_id, created_at desc);
 
-create table public.bike_report_media (
+create table if not exists public.bike_report_media (
   id uuid primary key default gen_random_uuid(),
   bike_report_id uuid not null references public.bike_reports(id) on delete cascade,
   storage_bucket text not null,
@@ -95,7 +110,7 @@ create table public.bike_report_media (
   unique (storage_bucket, storage_path)
 );
 
-create table public.driver_referrals (
+create table if not exists public.driver_referrals (
   id uuid primary key default gen_random_uuid(),
   referrer_driver_id uuid not null references public.drivers(id) on delete restrict,
   referral_code text not null unique check (referral_code ~ '^[A-Z0-9]{6,20}$'),
@@ -106,9 +121,9 @@ create table public.driver_referrals (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create unique index driver_referrals_open_code_idx on public.driver_referrals(referrer_driver_id) where status not in ('cancelled', 'rewarded');
+create unique index if not exists driver_referrals_open_code_idx on public.driver_referrals(referrer_driver_id) where status not in ('cancelled', 'rewarded');
 
-create table public.referral_rewards (
+create table if not exists public.referral_rewards (
   id uuid primary key default gen_random_uuid(),
   referral_id uuid not null unique references public.driver_referrals(id) on delete restrict,
   amount numeric(12,2) not null default 250.00 check (amount >= 0),
@@ -119,7 +134,7 @@ create table public.referral_rewards (
   updated_at timestamptz not null default now()
 );
 
-create table public.notification_deliveries (
+create table if not exists public.notification_deliveries (
   id uuid primary key default gen_random_uuid(),
   notification_id uuid not null references public.notifications(id) on delete cascade,
   provider text not null check (provider in ('in_app', 'email', 'whatsapp', 'sms', 'push')),
@@ -131,9 +146,9 @@ create table public.notification_deliveries (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create index notification_deliveries_pending_idx on public.notification_deliveries(status, scheduled_for) where status = 'scheduled';
+create index if not exists notification_deliveries_pending_idx on public.notification_deliveries(status, scheduled_for) where status = 'scheduled';
 
-create table public.integration_connections (
+create table if not exists public.integration_connections (
   id uuid primary key default gen_random_uuid(),
   provider text not null unique check (provider in ('invoice_system', 'mpg', 'ai', 'email', 'whatsapp', 'sms', 'push')),
   state text not null default 'not_connected' check (state in ('not_connected', 'configured', 'unavailable', 'mock_mode')),
@@ -151,12 +166,25 @@ insert into storage.buckets (id, name, public)
 values ('vmc-application-documents', 'vmc-application-documents', false)
 on conflict (id) do update set public = false;
 
+drop trigger if exists feature_flag_environments_set_updated_at on public.feature_flag_environments;
 create trigger feature_flag_environments_set_updated_at before update on public.feature_flag_environments for each row execute procedure public.set_updated_at();
+
+drop trigger if exists driver_applications_set_updated_at on public.driver_applications;
 create trigger driver_applications_set_updated_at before update on public.driver_applications for each row execute procedure public.set_updated_at();
+
+drop trigger if exists application_documents_set_updated_at on public.application_documents;
 create trigger application_documents_set_updated_at before update on public.application_documents for each row execute procedure public.set_updated_at();
+
+drop trigger if exists driver_referrals_set_updated_at on public.driver_referrals;
 create trigger driver_referrals_set_updated_at before update on public.driver_referrals for each row execute procedure public.set_updated_at();
+
+drop trigger if exists referral_rewards_set_updated_at on public.referral_rewards;
 create trigger referral_rewards_set_updated_at before update on public.referral_rewards for each row execute procedure public.set_updated_at();
+
+drop trigger if exists notification_deliveries_set_updated_at on public.notification_deliveries;
 create trigger notification_deliveries_set_updated_at before update on public.notification_deliveries for each row execute procedure public.set_updated_at();
+
+drop trigger if exists integration_connections_set_updated_at on public.integration_connections;
 create trigger integration_connections_set_updated_at before update on public.integration_connections for each row execute procedure public.set_updated_at();
 
 -- A safe resolver: it returns only the caller's allowed state for one key.
@@ -239,27 +267,70 @@ alter table public.integration_connections enable row level security;
 revoke all on public.release_features, public.feature_flag_environments, public.feature_flag_assignments, public.driver_applications, public.application_documents, public.bike_report_media, public.driver_referrals, public.referral_rewards, public.notification_deliveries, public.integration_connections from anon;
 grant select, insert, update, delete on public.release_features, public.feature_flag_environments, public.feature_flag_assignments, public.driver_applications, public.application_documents, public.bike_report_media, public.driver_referrals, public.referral_rewards, public.notification_deliveries, public.integration_connections to authenticated;
 
+drop policy if exists "release_features_select_management" on public.release_features;
 create policy "release_features_select_management" on public.release_features for select to authenticated using (public.is_management());
+
+drop policy if exists "release_features_admin_write" on public.release_features;
 create policy "release_features_admin_write" on public.release_features for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists "flag_environments_select_management" on public.feature_flag_environments;
 create policy "flag_environments_select_management" on public.feature_flag_environments for select to authenticated using (public.is_management());
+
+drop policy if exists "flag_environments_admin_write" on public.feature_flag_environments;
 create policy "flag_environments_admin_write" on public.feature_flag_environments for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists "flag_assignments_select_admin" on public.feature_flag_assignments;
 create policy "flag_assignments_select_admin" on public.feature_flag_assignments for select to authenticated using (public.is_admin());
+
+drop policy if exists "flag_assignments_admin_write" on public.feature_flag_assignments;
 create policy "flag_assignments_admin_write" on public.feature_flag_assignments for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists "applications_select_authorized" on public.driver_applications;
 create policy "applications_select_authorized" on public.driver_applications for select to authenticated using (profile_id = (select auth.uid()) or public.is_management());
+
+drop policy if exists "applications_insert_own" on public.driver_applications;
 create policy "applications_insert_own" on public.driver_applications for insert to authenticated with check (profile_id = (select auth.uid()) and status = 'draft');
+
+drop policy if exists "applications_update_own_draft" on public.driver_applications;
 create policy "applications_update_own_draft" on public.driver_applications for update to authenticated using (profile_id = (select auth.uid()) and status in ('draft', 'changes_requested')) with check (profile_id = (select auth.uid()) and status in ('draft', 'submitted'));
+
+drop policy if exists "applications_management_write" on public.driver_applications;
 create policy "applications_management_write" on public.driver_applications for all to authenticated using (public.is_management()) with check (public.is_management());
+
+drop policy if exists "application_documents_select_authorized" on public.application_documents;
 create policy "application_documents_select_authorized" on public.application_documents for select to authenticated using (public.is_management() or exists (select 1 from public.driver_applications a where a.id = application_documents.application_id and a.profile_id = (select auth.uid())));
+
+drop policy if exists "application_documents_insert_own" on public.application_documents;
 create policy "application_documents_insert_own" on public.application_documents for insert to authenticated with check (exists (select 1 from public.driver_applications a where a.id = application_documents.application_id and a.profile_id = (select auth.uid()) and a.status in ('draft', 'changes_requested')));
+
+drop policy if exists "application_documents_management_write" on public.application_documents;
 create policy "application_documents_management_write" on public.application_documents for all to authenticated using (public.is_management()) with check (public.is_management());
+
+drop policy if exists "bike_report_media_select_authorized" on public.bike_report_media;
 create policy "bike_report_media_select_authorized" on public.bike_report_media for select to authenticated using (public.is_management() or exists (select 1 from public.bike_reports b where b.id = bike_report_media.bike_report_id and public.is_driver_owner(b.driver_id)));
+
+drop policy if exists "bike_report_media_insert_own" on public.bike_report_media;
 create policy "bike_report_media_insert_own" on public.bike_report_media for insert to authenticated with check (created_by = (select auth.uid()) and exists (select 1 from public.bike_reports b where b.id = bike_report_media.bike_report_id and public.is_driver_owner(b.driver_id)));
+
+drop policy if exists "referrals_select_authorized" on public.driver_referrals;
 create policy "referrals_select_authorized" on public.driver_referrals for select to authenticated using (public.is_management() or public.is_driver_owner(referrer_driver_id));
+
+drop policy if exists "referrals_management_write" on public.driver_referrals;
 create policy "referrals_management_write" on public.driver_referrals for all to authenticated using (public.is_management()) with check (public.is_management());
+
+drop policy if exists "rewards_select_authorized" on public.referral_rewards;
 create policy "rewards_select_authorized" on public.referral_rewards for select to authenticated using (public.is_management() or exists (select 1 from public.driver_referrals r where r.id = referral_rewards.referral_id and public.is_driver_owner(r.referrer_driver_id)));
+
+drop policy if exists "rewards_management_write" on public.referral_rewards;
 create policy "rewards_management_write" on public.referral_rewards for all to authenticated using (public.is_management()) with check (public.is_management());
+
+drop policy if exists "deliveries_select_management" on public.notification_deliveries;
 create policy "deliveries_select_management" on public.notification_deliveries for select to authenticated using (public.is_management());
+
+drop policy if exists "deliveries_management_write" on public.notification_deliveries;
 create policy "deliveries_management_write" on public.notification_deliveries for all to authenticated using (public.is_management()) with check (public.is_management());
+
+drop policy if exists "integration_connections_admin_only" on public.integration_connections;
 create policy "integration_connections_admin_only" on public.integration_connections for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
 revoke all on function public.feature_is_enabled(text, public.feature_environment) from public;

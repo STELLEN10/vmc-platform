@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { MessageCircle, Mail } from "lucide-react";
 import { CreateInvoiceModal } from "./create-invoice-form";
 import { InvoiceReceiptModal } from "./invoice-receipt-view";
 import { type InvoiceRecord } from "./invoice-actions";
+import { getWhatsAppShareUrl, getEmailShareUrl } from "@/lib/finance/share";
 
 type DriverOption = {
   id: string;
@@ -185,16 +187,56 @@ export function InvoicesManager({
                       </span>
                     </td>
                     <td className="py-3 px-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedInvoice(inv);
-                          setActiveModal("view");
-                        }}
-                        className="py-1 px-3 bg-sky-100 hover:bg-sky-200 text-sky-900 rounded font-semibold text-xs cursor-pointer transition-colors shadow-sm inline-flex items-center gap-1.5"
-                      >
-                        <span>📄</span> View & Print PDF
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <a
+                          href={getWhatsAppShareUrl({
+                            type: inv.document_type,
+                            docNumber: inv.invoice_number,
+                            recipientName: inv.recipient_name,
+                            recipientPhone: inv.recipient_phone,
+                            issueDate: inv.issue_date,
+                            dueDate: inv.due_date,
+                            items: inv.items,
+                            subtotal: inv.subtotal,
+                            totalAmount: inv.total_amount,
+                            notes: inv.notes,
+                          }, inv.recipient_phone)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1 rounded text-emerald-700 hover:bg-emerald-50 transition-colors"
+                          title="Share to WhatsApp"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" />
+                        </a>
+                        <a
+                          href={getEmailShareUrl({
+                            type: inv.document_type,
+                            docNumber: inv.invoice_number,
+                            recipientName: inv.recipient_name,
+                            recipientEmail: inv.recipient_email,
+                            issueDate: inv.issue_date,
+                            dueDate: inv.due_date,
+                            items: inv.items,
+                            subtotal: inv.subtotal,
+                            totalAmount: inv.total_amount,
+                            notes: inv.notes,
+                          }, inv.recipient_email)}
+                          className="p-1 rounded text-sky-700 hover:bg-sky-50 transition-colors"
+                          title="Share via Email"
+                        >
+                          <Mail className="w-3.5 h-3.5" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedInvoice(inv);
+                            setActiveModal("view");
+                          }}
+                          className="py-1 px-2.5 bg-sky-100 hover:bg-sky-200 text-sky-900 rounded font-semibold text-xs cursor-pointer transition-colors shadow-2xs inline-flex items-center gap-1"
+                        >
+                          <span>📄</span> View & PDF
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

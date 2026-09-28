@@ -36,7 +36,8 @@ export default function Home() {
 
           <p className="landing-support">
             Need help? VMC:{" "}
-            <a href="tel:+27766681879">+27 76 668 1879</a>
+            <a href="tel:+27766681879">+27 76 668 1879</a> ·{" "}
+            <a href="mailto:info@vsprocurement.co.za">info@vsprocurement.co.za</a>
           </p>
         </div>
 

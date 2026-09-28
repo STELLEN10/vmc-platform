@@ -1,7 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
+import { MessageCircle, Mail, Copy, Check, Printer } from "lucide-react";
 import { type InvoiceRecord, updateInvoiceStatusAction } from "./invoice-actions";
+import {
+  getWhatsAppShareUrl,
+  getEmailShareUrl,
+  buildWhatsAppMessage,
+  OFFICIAL_BANK_DETAILS,
+} from "@/lib/finance/share";
 
 export function InvoiceReceiptModal({
   invoice,
@@ -12,6 +20,8 @@ export function InvoiceReceiptModal({
   onClose: () => void;
   onStatusChange?: (newStatus: "draft" | "issued" | "paid" | "cancelled") => void;
 }) {
+  const [copied, setCopied] = useState(false);
+
   function handlePrint() {
     window.print();
   }
@@ -26,38 +36,101 @@ export function InvoiceReceiptModal({
   const isQuote = invoice.document_type === "quotation";
   const docTitle = isQuote ? "FORMAL QUOTATION" : "TAX INVOICE";
 
+  const shareDoc = {
+    type: invoice.document_type,
+    docNumber: invoice.invoice_number,
+    recipientName: invoice.recipient_name,
+    recipientEmail: invoice.recipient_email,
+    recipientPhone: invoice.recipient_phone,
+    bikeReference: invoice.bike_reference,
+    issueDate: invoice.issue_date,
+    dueDate: invoice.due_date,
+    items: invoice.items,
+    subtotal: invoice.subtotal,
+    vatAmount: invoice.vat_amount,
+    totalAmount: invoice.total_amount,
+    notes: invoice.notes,
+  };
+
+  const whatsappUrl = getWhatsAppShareUrl(shareDoc, invoice.recipient_phone);
+  const emailUrl = getEmailShareUrl(shareDoc, invoice.recipient_email);
+
+  function handleCopy() {
+    const text = buildWhatsAppMessage(shareDoc);
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-6 overflow-y-auto">
       {/* Modal Container */}
       <div className="bg-paper border border-line rounded-2xl shadow-2xl w-full max-w-3xl max-h-[95vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Top Control Bar (Hidden during print) */}
-        <div className="p-3 sm:p-4 bg-navy text-white flex items-center justify-between print:hidden">
+        <div className="p-3 sm:p-4 bg-navy text-white flex flex-wrap items-center justify-between gap-2 print:hidden">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold uppercase tracking-wider text-sky-200">
-              Document Preview · {invoice.invoice_number}
+              Preview · {invoice.invoice_number}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Share to WhatsApp */}
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="py-1.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-bold cursor-pointer shadow transition-colors inline-flex items-center gap-1.5"
+              title="Share this invoice/quotation via WhatsApp"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              <span>WhatsApp</span>
+            </a>
+
+            {/* Share to Email */}
+            <a
+              href={emailUrl}
+              className="py-1.5 px-3 bg-sky-600 hover:bg-sky-500 text-white rounded text-xs font-bold cursor-pointer shadow transition-colors inline-flex items-center gap-1.5"
+              title="Share this invoice/quotation via email"
+            >
+              <Mail className="w-3.5 h-3.5" />
+              <span>Email</span>
+            </a>
+
+            {/* Copy Summary */}
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="py-1.5 px-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs font-semibold cursor-pointer shadow transition-colors inline-flex items-center gap-1.5"
+              title="Copy details to clipboard"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copied ? "Copied!" : "Copy"}</span>
+            </button>
+
             {invoice.status !== "paid" && (
               <button
                 type="button"
                 onClick={handleMarkPaid}
-                className="py-1 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-semibold cursor-pointer shadow transition-colors"
+                className="py-1.5 px-3 bg-emerald-700 hover:bg-emerald-600 text-white rounded text-xs font-semibold cursor-pointer shadow transition-colors"
               >
-                Mark as Paid
+                Mark Paid
               </button>
             )}
+
             <button
               type="button"
               onClick={handlePrint}
-              className="py-1.5 px-4 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded text-xs cursor-pointer shadow transition-colors flex items-center gap-1.5"
+              className="py-1.5 px-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded text-xs cursor-pointer shadow transition-colors inline-flex items-center gap-1.5"
             >
-              <span>🖨️</span> Print / Save PDF Receipt
+              <Printer className="w-3.5 h-3.5" />
+              <span>PDF</span>
             </button>
+
             <button
               type="button"
               onClick={onClose}
-              className="text-muted hover:text-white p-1 text-xl font-bold ml-2 cursor-pointer"
+              className="text-muted hover:text-white p-1 text-xl font-bold ml-1 cursor-pointer"
               aria-label="Close"
             >
               &times;
@@ -67,16 +140,15 @@ export function InvoiceReceiptModal({
 
         {/* Printable Receipt Body */}
         <div className="p-6 sm:p-10 overflow-y-auto flex-1 bg-white text-slate-900 font-sans print:p-0 print:overflow-visible">
-          {/* Header Section with Official VMC Logo */}
+          {/* Header Section with Official Logo & Contact */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b-2 border-slate-900 gap-4">
             <div className="flex items-center gap-4">
-              {/* VMC Official App Logo */}
-              <div className="w-28 sm:w-36 h-auto relative flex-shrink-0">
+              <div className="w-24 sm:w-28 h-auto relative flex-shrink-0">
                 <Image
                   src="/vmc-logo.png"
                   alt="Valhalla Motorcycles"
-                  width={180}
-                  height={144}
+                  width={140}
+                  height={112}
                   priority
                   className="object-contain"
                 />
@@ -85,13 +157,21 @@ export function InvoiceReceiptModal({
                 <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-950 m-0">
                   VALHALLA MOTORCYCLES
                 </h1>
-                <p className="text-xs font-semibold text-slate-600 m-0 uppercase tracking-widest">
-                  Fleet Operations & Motorcycle Leasing
+                <p className="text-xs font-bold text-amber-800 m-0 uppercase tracking-wider">
+                  VS PROCUREMENT · FLEET OPERATIONS
                 </p>
                 <div className="text-[11px] text-slate-500 mt-1 leading-snug">
                   <div>Reg: 2024/092812/07 · VAT No: 4920281923</div>
-                  <div>142 Marshall Street, Johannesburg, 2001</div>
-                  <div>dispatch@valhallamotorcycles.co.za · +27 11 832 1000</div>
+                  <div>Pretoria & Midrand · South Africa</div>
+                  <div>
+                    <a href={`mailto:${OFFICIAL_BANK_DETAILS.email}`} className="text-slate-700 hover:underline">
+                      {OFFICIAL_BANK_DETAILS.email}
+                    </a>{" "}
+                    ·{" "}
+                    <a href={`tel:${OFFICIAL_BANK_DETAILS.phone.replace(/\s+/g, "")}`} className="text-slate-700 hover:underline">
+                      {OFFICIAL_BANK_DETAILS.phone}
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -119,7 +199,32 @@ export function InvoiceReceiptModal({
             </div>
           </div>
 
-          {/* Recipient / Billed To Section (Reception of Driver) */}
+          {/* Quick Share Banner Inside Preview */}
+          <div className="my-4 p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs print:hidden">
+            <span className="text-slate-600 font-medium">
+              Share with client via WhatsApp or Email:
+            </span>
+            <div className="flex items-center gap-2">
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                Share to WhatsApp
+              </a>
+              <a
+                href={emailUrl}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs"
+              >
+                <Mail className="w-3.5 h-3.5" />
+                Share to Email
+              </a>
+            </div>
+          </div>
+
+          {/* Recipient / Billed To Section */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 my-6 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs">
             <div>
               <span className="font-bold uppercase tracking-wider text-slate-500 block mb-1">
@@ -202,32 +307,36 @@ export function InvoiceReceiptModal({
             </div>
           </div>
 
-          {/* Bank Details & Notes */}
+          {/* Capitec Bank Details & Notes */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6 pt-4 border-t border-slate-200 text-xs">
-            <div className="p-3 rounded-lg border border-slate-200 bg-slate-50">
-              <span className="font-bold uppercase tracking-wider text-slate-700 block mb-1">
+            <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50">
+              <span className="font-bold uppercase tracking-wider text-amber-900 block mb-1.5 text-[11px]">
                 Official Banking Details (EFT)
               </span>
-              <div className="text-slate-700 space-y-0.5 leading-relaxed">
-                <div>Bank: <strong className="text-slate-900">Standard Bank</strong></div>
-                <div>Account Name: <strong>Valhalla Motorcycles (Pty) Ltd</strong></div>
-                <div>Account Number: <strong>082 910 482</strong></div>
-                <div>Branch Code: <strong>051001</strong></div>
+              <div className="text-slate-800 space-y-1 leading-relaxed font-mono text-xs">
+                <div>Bank Name: <strong className="text-slate-950">{OFFICIAL_BANK_DETAILS.bankName}</strong></div>
+                <div>Account Holder: <strong className="text-slate-950">{OFFICIAL_BANK_DETAILS.accountHolder}</strong></div>
+                <div>Account No: <strong className="text-slate-950 tracking-wider">{OFFICIAL_BANK_DETAILS.accountNumber}</strong></div>
+                <div>Account Type: <strong className="text-slate-950">{OFFICIAL_BANK_DETAILS.accountType}</strong></div>
+                <div>Branch Code: <strong className="text-slate-950">{OFFICIAL_BANK_DETAILS.branchCode}</strong></div>
                 <div>Reference: <strong className="text-emerald-700">{invoice.invoice_number}</strong></div>
               </div>
             </div>
 
-            <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 flex flex-col justify-between">
+            <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 flex flex-col justify-between">
               <div>
                 <span className="font-bold uppercase tracking-wider text-slate-700 block mb-1">
-                  Payment Terms & Notes
+                  Payment Terms & Enquiries
                 </span>
                 <p className="text-slate-600 m-0 leading-relaxed">
                   {invoice.notes || "Payments are due on schedule. Proof of payment must be submitted in the driver portal."}
                 </p>
+                <div className="mt-2 text-slate-600">
+                  Contact: <span className="font-semibold">{OFFICIAL_BANK_DETAILS.email}</span> · <span className="font-semibold">{OFFICIAL_BANK_DETAILS.phone}</span>
+                </div>
               </div>
               <div className="mt-2 text-[10px] text-slate-400">
-                Official Computer-Generated Tax Document · Valhalla Motorcycles Fleet Desk
+                Official Computer-Generated Tax Document · VS Procurement / Valhalla Motorcycles
               </div>
             </div>
           </div>
@@ -236,11 +345,11 @@ export function InvoiceReceiptModal({
           <div className="pt-6 border-t border-slate-300 flex items-center justify-between text-[11px] text-slate-500">
             <div>
               <span>Authorized Fleet Finance Officer: </span>
-              <strong className="text-slate-800">Valhalla Motorcycles Operations</strong>
+              <strong className="text-slate-800">VS Procurement & Valhalla Motorcycles</strong>
             </div>
             <div className="flex items-center gap-1.5 text-emerald-800 font-bold">
               <span className="w-2 h-2 rounded-full bg-emerald-600" />
-              Verified Official Receipt
+              Verified Official Record
             </div>
           </div>
         </div>

@@ -382,6 +382,9 @@ export function CreateInvoiceModal({
                 onChange={(e) => setNotes(e.target.value)}
                 className="w-full text-xs p-2.5 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
+              <p className="text-[11px] text-slate-500 mt-1">
+                Banking attached: <strong className="text-slate-700">Capitec (VS Procurement) · Acc 10976145 · Branch 25854</strong> · info@vsprocurement.co.za
+              </p>
             </div>
 
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">

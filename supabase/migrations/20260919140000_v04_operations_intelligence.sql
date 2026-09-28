@@ -42,8 +42,8 @@ values
   ('major_service_interval_km', '6000'::jsonb, 'service', 'Comprehensive major inspection milestone for drivetrain and chassis'),
   ('free_service_allowance', '3'::jsonb, 'service', 'Number of complimentary service vouchers allocated per standard lease contract'),
   ('default_low_stock_threshold', '5'::jsonb, 'inventory', 'Default threshold quantity to trigger low-stock alerts on parts'),
-  ('emergency_hotline_phone', '"+27 11 888 0192"'::jsonb, 'emergency', 'VMC 24/7 central roadside emergency hotline'),
-  ('emergency_whatsapp_number', '"+27 82 555 0192"'::jsonb, 'emergency', 'VMC roadside rapid response WhatsApp dispatch channel'),
+  ('emergency_hotline_phone', '"+27 76 668 1879"'::jsonb, 'emergency', 'VMC 24/7 central roadside emergency hotline'),
+  ('emergency_whatsapp_number', '"+27 76 668 1879"'::jsonb, 'emergency', 'VMC roadside rapid response WhatsApp dispatch channel'),
   ('payment_grace_period_days', '2'::jsonb, 'finance', 'Grace period in days before a missed weekly payment transitions to overdue'),
   ('contract_default_weekly_amount', '650'::jsonb, 'finance', 'Default weekly rental amount in ZAR for standard driver contracts'),
   ('contract_default_total_weeks', '104'::jsonb, 'finance', 'Default rent-to-own contract duration in weeks (2 years)')

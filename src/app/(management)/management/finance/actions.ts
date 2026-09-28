@@ -139,7 +139,7 @@ export async function createInvoiceOrQuotation(payload: CreateInvoicePayload) {
     taxAmount,
     totalAmount,
     notes: payload.notes || null,
-    paymentInstructions: `Valhalla Motorcycles Pty Ltd | FNB Corporate | Acc: 62819283749 | Branch: 250655 | Ref: ${docNumber}`,
+    paymentInstructions: `Bank Name: Capitec | Account Holder: VS Procurement | Account No: 10976145 | Account Type: Business Account | Branch Code: 25854 | Ref: ${docNumber}`,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -187,7 +187,7 @@ export async function convertQuotationToInvoice(quotationId: string) {
     status: "issued",
     issueDate: new Date().toISOString().split("T")[0],
     dueDate: new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0],
-    paymentInstructions: `Valhalla Motorcycles Pty Ltd | FNB Corporate | Acc: 62819283749 | Branch: 250655 | Ref: ${docNumber}`,
+    paymentInstructions: `Bank Name: Capitec | Account Holder: VS Procurement | Account No: 10976145 | Account Type: Business Account | Branch Code: 25854 | Ref: ${docNumber}`,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

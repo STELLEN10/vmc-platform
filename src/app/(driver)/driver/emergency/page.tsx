@@ -68,7 +68,12 @@ export default async function DriverEmergencyPage() {
           </div>
           <div className="bg-red-700/40 p-3 rounded border border-red-500/50 text-xs">
             <span className="font-bold block text-white">VMC 24/7 ROADSIDE DESK</span>
-            <span className="text-red-200 font-mono text-sm block">+27 (0) 11 555 0199</span>
+            <a href="tel:+27766681879" className="text-red-100 hover:text-white font-mono text-sm block font-bold transition-colors">
+              +27 76 668 1879
+            </a>
+            <a href="mailto:info@vsprocurement.co.za" className="text-red-200 hover:text-white text-[11px] block mt-0.5 transition-colors">
+              info@vsprocurement.co.za
+            </a>
             {bike && (
               <span className="text-red-200 text-[11px] block mt-1">
                 Motorcycle: {bike.brand} {bike.model} ({bike.registration_number || "Reg Pending"})
