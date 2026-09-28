@@ -17,6 +17,7 @@ export const FEATURE_CATALOG = {
   application_system: { name: "Applications", release: "v0.6.0-beta.1", description: "Applications, documents and human review." },
   new_onboarding: { name: "Extended onboarding", release: "v0.6.0-beta.1", description: "Expanded onboarding experience." },
   ai_document_check: { name: "AI document check", release: "v0.6.0-beta.1", description: "Human-reviewed AI document pre-check." },
+  ai_assistant: { name: "VMC AI assistant", release: "v0.6.0-beta.1", description: "Groq-powered VMC assistant with controlled operational tools." },
   ai_parts_assistant: { name: "AI parts assistant", release: "v0.7.0-beta.1", description: "Database-grounded parts lookup." },
   invoice_integration: { name: "Invoice integration", release: "v0.8.0-beta.1", description: "Official invoice provider adapter." },
   mpg_integration: { name: "MPG integration", release: "v0.8.0-beta.1", description: "Official MPG provider adapter." },

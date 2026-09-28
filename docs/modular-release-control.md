@@ -45,6 +45,8 @@ Optional:
 
 ```text
 VMC_FEATURE_ENVIRONMENT=production  # development | preview | production
+GROQ_API_KEY                            # server-only V0.6 AI provider key
+GROQ_MODEL=openai/gpt-oss-20b           # optional model override
 ```
 
-When omitted, the app chooses `development` locally, `preview` for Vercel previews, and `production` otherwise. Never make `SUPABASE_SECRET_KEY` or provider credentials `NEXT_PUBLIC_` variables.
+When omitted, the app chooses `development` locally, `preview` for Vercel previews, and `production` otherwise. Never make `SUPABASE_SECRET_KEY`, `GROQ_API_KEY` or provider credentials `NEXT_PUBLIC_` variables.
