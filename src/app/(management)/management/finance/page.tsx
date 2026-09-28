@@ -22,7 +22,7 @@ type RawFinanceContract = {
     profile_id: string;
     profiles: { id: string; full_name: string; email?: string; phone?: string } | null;
   } | null;
-  bikes: { id: string; registration: string } | null;
+  bikes: { id: string; registration_number: string | null } | null;
 };
 
 export default async function ManagementFinancePage() {
@@ -57,7 +57,7 @@ export default async function ManagementFinancePage() {
       ),
       bikes (
         id,
-        registration
+        registration_number
       )
     `),
     supabase.from("payment_periods").select("*").order("due_date", { ascending: false }),
@@ -110,7 +110,7 @@ export default async function ManagementFinancePage() {
     const c = contractMap.get(p.contract_id);
     const driverName = c?.drivers?.profiles?.full_name || "Unknown Driver";
     const driverProfileId = c?.drivers?.profile_id || "";
-    const bikeRegistration = c?.bikes?.registration || "Unknown";
+    const bikeRegistration = c?.bikes?.registration_number || "Unknown";
     const amt = Number(p.amount_due) || 0;
 
     return {
@@ -134,7 +134,7 @@ export default async function ManagementFinancePage() {
   const contracts: FinanceContractSummary[] = typedContracts.map((c) => {
     const driverName = c.drivers?.profiles?.full_name || "Unknown Driver";
     const driverProfileId = c.drivers?.profile_id || "";
-    const bikeRegistration = c.bikes?.registration || "Unassigned";
+    const bikeRegistration = c.bikes?.registration_number || "Unassigned";
     const totalWeeks = c.total_weeks || 52;
     const weeklyAmount = Number(c.weekly_amount) || 0;
     const totalValue = totalWeeks * weeklyAmount;
@@ -164,7 +164,7 @@ export default async function ManagementFinancePage() {
     id: string;
     profile_id: string;
     profiles: { id: string; full_name: string; email?: string; phone?: string } | null;
-    bikes: { id: string; registration: string } | null;
+    bikes: { id: string; registration_number: string | null } | null;
   };
 
   const driverOptions: FinanceDriverOption[] = ((rawDrivers ?? []) as unknown as RawDriverItem[]).map((d) => ({
@@ -173,7 +173,7 @@ export default async function ManagementFinancePage() {
     name: d.profiles?.full_name || "Driver",
     email: d.profiles?.email || "",
     phone: d.profiles?.phone || "",
-    bikeRegistration: d.bikes?.registration || "Unassigned",
+    bikeRegistration: d.bikes?.registration_number || "Unassigned",
   }));
 
   // Map parts options for parts lookup in quote/invoice builder
