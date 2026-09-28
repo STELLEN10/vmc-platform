@@ -29,6 +29,24 @@ export const FEATURE_CATALOG = {
 
 export type FeatureKey = keyof typeof FEATURE_CATALOG;
 
+export const DRIVER_FEATURE_KEYS = new Set<FeatureKey>([
+  "new_payment_engine",
+  "historical_payments",
+  "payment_proof_upload",
+  "new_maintenance",
+  "parts_inventory",
+  "emergency_bike_support",
+  "service_requests",
+  "notification_system",
+  "driver_referrals",
+  "new_onboarding",
+  "ai_assistant",
+]);
+
+export function isDriverFeatureKey(value: FeatureKey): boolean {
+  return DRIVER_FEATURE_KEYS.has(value);
+}
+
 export function isFeatureKey(value: string): value is FeatureKey {
   return value in FEATURE_CATALOG;
 }
