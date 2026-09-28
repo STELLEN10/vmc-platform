@@ -603,12 +603,14 @@ export function FinanceView({
                                   docNumber: inv.docNumber,
                                   recipientName: inv.driverName,
                                   recipientPhone: inv.driverPhone,
+                                  bikeReference: inv.bikeRegistration,
                                   issueDate: inv.issueDate,
                                   dueDate: inv.dueDate,
                                   items: inv.items,
                                   subtotal: inv.subtotal,
                                   totalAmount: inv.totalAmount,
                                   notes: inv.notes,
+                                  corridor: "Pretoria to Midrand",
                                 }, inv.driverPhone)}
                                 target="_blank"
                                 rel="noopener noreferrer"

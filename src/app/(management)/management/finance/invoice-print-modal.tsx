@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { X, Printer, MessageCircle, Mail, Copy, Check } from "lucide-react";
+import Image from "next/image";
+import { X, Printer, MessageCircle, Mail, Copy, Check, ChevronDown, ChevronUp } from "lucide-react";
 import type { InvoiceOrQuotation } from "@/lib/finance/invoices";
 import {
   getWhatsAppShareUrl,
@@ -18,6 +19,7 @@ interface InvoicePrintModalProps {
 
 export function InvoicePrintModal({ isOpen, onClose, doc }: InvoicePrintModalProps) {
   const [copied, setCopied] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   if (!isOpen || !doc) return null;
 
@@ -38,14 +40,15 @@ export function InvoicePrintModal({ isOpen, onClose, doc }: InvoicePrintModalPro
     totalAmount: doc.totalAmount,
     notes: doc.notes,
     paymentInstructions: doc.paymentInstructions,
+    corridor: "Pretoria to Midrand",
   };
 
+  const whatsappMessage = buildWhatsAppMessage(shareDoc);
   const whatsappUrl = getWhatsAppShareUrl(shareDoc, doc.driverPhone);
   const emailUrl = getEmailShareUrl(shareDoc, doc.driverEmail);
 
   function handleCopy() {
-    const text = buildWhatsAppMessage(shareDoc);
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(whatsappMessage);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -91,10 +94,10 @@ export function InvoicePrintModal({ isOpen, onClose, doc }: InvoicePrintModalPro
               type="button"
               onClick={handleCopy}
               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold transition-colors cursor-pointer text-xs"
-              title="Copy formatted summary to clipboard"
+              title="Copy clean WhatsApp formatted message to clipboard"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copied ? "Copied!" : "Copy"}</span>
+              <span>{copied ? "Copied!" : "Copy Clean Message"}</span>
             </button>
 
             {/* Print / Save PDF */}
@@ -118,33 +121,38 @@ export function InvoicePrintModal({ isOpen, onClose, doc }: InvoicePrintModalPro
 
         {/* Printable Paper Document */}
         <div className="p-6 sm:p-10 space-y-6 text-slate-800 bg-white" id="printable-invoice">
-          {/* Document Header */}
+          {/* Document Header with Official Logo */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 pb-6">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-lg bg-amber-600 flex items-center justify-center text-white font-extrabold text-sm tracking-wider">
-                  VMC
-                </span>
-                <div>
-                  <span className="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight block leading-tight">
-                    VALHALLA MOTORCYCLES
-                  </span>
-                  <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider block">
-                    VS PROCUREMENT
-                  </span>
-                </div>
+            <div className="flex items-center gap-3.5">
+              <div className="w-16 sm:w-20 h-auto relative flex-shrink-0">
+                <Image
+                  src="/vmc-logo.png"
+                  alt="Valhalla Motorcycles"
+                  width={90}
+                  height={72}
+                  priority
+                  className="object-contain"
+                />
               </div>
-              <p className="text-[11px] text-slate-500 mt-2 leading-snug">
-                Fleet Operations & Procurement Hub<br />
-                Pretoria & Midrand · South Africa<br />
-                <a href={`mailto:${OFFICIAL_BANK_DETAILS.email}`} className="text-slate-600 hover:underline">
-                  {OFFICIAL_BANK_DETAILS.email}
-                </a>{" "}
-                ·{" "}
-                <a href={`tel:${OFFICIAL_BANK_DETAILS.phone.replace(/\s+/g, "")}`} className="text-slate-600 hover:underline">
-                  {OFFICIAL_BANK_DETAILS.phone}
-                </a>
-              </p>
+              <div>
+                <span className="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight block leading-tight">
+                  VALHALLA MOTORCYCLES
+                </span>
+                <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider block">
+                  VS PROCUREMENT · FLEET OPERATIONS
+                </span>
+                <p className="text-[11px] text-slate-500 mt-1 leading-snug">
+                  Fleet Operations & Procurement Hub<br />
+                  Pretoria to Midrand · South Africa<br />
+                  <a href={`mailto:${OFFICIAL_BANK_DETAILS.email}`} className="text-slate-600 hover:underline">
+                    {OFFICIAL_BANK_DETAILS.email}
+                  </a>{" "}
+                  ·{" "}
+                  <a href={`tel:${OFFICIAL_BANK_DETAILS.phone.replace(/\s+/g, "")}`} className="text-slate-600 hover:underline">
+                    {OFFICIAL_BANK_DETAILS.phone}
+                  </a>
+                </p>
+              </div>
             </div>
 
             <div className="text-left sm:text-right">
@@ -168,29 +176,47 @@ export function InvoicePrintModal({ isOpen, onClose, doc }: InvoicePrintModalPro
             </div>
           </div>
 
-          {/* Quick In-Document Share Bar (visible on mobile / inside preview, hidden during print) */}
-          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs print:hidden">
-            <span className="text-slate-600 font-medium">
-              Share this {isQuo ? "quotation" : "invoice"} with client or records:
-            </span>
-            <div className="flex items-center gap-2">
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
-              >
-                <MessageCircle className="w-3 h-3" />
-                Share to WhatsApp
-              </a>
-              <a
-                href={emailUrl}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-sky-600 hover:bg-sky-700 text-white font-bold"
-              >
-                <Mail className="w-3 h-3" />
-                Share to Email
-              </a>
+          {/* Quick Clean Message Box & Preview (print:hidden) */}
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs print:hidden">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-slate-700 font-bold flex items-center gap-1.5">
+                <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                Clean WhatsApp Message (Ready to send):
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPreview(!showPreview)}
+                  className="inline-flex items-center gap-1 text-[11px] text-slate-600 hover:text-slate-900 cursor-pointer"
+                >
+                  {showPreview ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  <span>{showPreview ? "Hide Preview" : "View Message Text"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-white font-semibold cursor-pointer"
+                >
+                  {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                  <span>{copied ? "Copied!" : "Copy Text"}</span>
+                </button>
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"
+                >
+                  <MessageCircle className="w-3 h-3" />
+                  <span>Open WhatsApp</span>
+                </a>
+              </div>
             </div>
+
+            {showPreview && (
+              <pre className="p-3 bg-slate-900 text-slate-100 rounded-lg text-[11px] font-mono whitespace-pre-wrap overflow-x-auto leading-relaxed border border-slate-800">
+                {whatsappMessage}
+              </pre>
+            )}
           </div>
 
           {/* Details Grid */}

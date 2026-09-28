@@ -52,6 +52,10 @@ export default async function ManagementLayout({ children }: { children: ReactNo
       label: "Finance",
       badge: badges.pendingPayments,
     },
+    {
+      href: "/management/quotations",
+      label: "Quotations",
+    },
     ...(maintenanceEnabled
       ? [
           {

@@ -87,31 +87,26 @@ export function generateCleanWhatsAppMessage(quote: Quotation): string {
   const itemsText = quote.items
     .map(
       (item, idx) =>
-        `${idx + 1}. *${item.description}* (x${item.quantity}) — *R ${item.total.toFixed(2)}*`
+        `${idx + 1}. *${item.description}* (x${item.quantity}) - *R ${item.total.toFixed(2)}*`
     )
     .join("\n");
 
-  return `━━━━━━━━━━━━━━━━━━━━━
-🏍️ *VS PROCUREMENT / VALHALLA MOTORCYCLES*
-📍 *${quote.corridor || "Pretoria to Midrand"}*
-━━━━━━━━━━━━━━━━━━━━━
+  return `*VS PROCUREMENT / VALHALLA MOTORCYCLES*
+*${quote.corridor || "Pretoria to Midrand Fleet Operations"}*
+────────────────────────────
+*OFFICIAL QUOTATION: ${quote.id}*
 
-📋 *OFFICIAL QUOTATION: ${quote.id}*
+*Client / Driver:* ${quote.clientName}
+*Contact:* ${quote.contactNumber}
+*Motorcycle:* ${quote.motorcycleReg}${quote.motorcycleModel ? ` (${quote.motorcycleModel})` : ""}
+*Date Issued:* ${quote.dateIssued} | *Due:* ${quote.dueDate}
 
-👤 *Client / Driver:* ${quote.clientName}
-📱 *Contact:* ${quote.contactNumber}
-🏍️ *Motorcycle:* ${quote.motorcycleReg}${quote.motorcycleModel ? ` (${quote.motorcycleModel})` : ""}
-📅 *Date Issued:* ${quote.dateIssued}
-⏰ *Payment Due:* ${quote.dueDate}
-
-─────────────────────
-🛠️ *SCHEDULE OF CHARGES / ITEMS:*
+*SCHEDULE OF CHARGES / ITEMS:*
 ${itemsText}
 
-💰 *TOTAL QUOTED: R ${quote.totalAmount.toFixed(2)}*
-─────────────────────
-
-💳 *OFFICIAL BANKING DETAILS (EFT):*
+*TOTAL QUOTED:* *R ${quote.totalAmount.toFixed(2)}*
+────────────────────────────
+*OFFICIAL BANKING DETAILS (EFT):*
 • *Bank Name:* ${quote.bankingDetails.bankName}
 • *Account Holder:* ${quote.bankingDetails.accountHolder}
 • *Account No:* ${quote.bankingDetails.accountNumber}
@@ -119,10 +114,9 @@ ${itemsText}
 • *Branch Code:* ${quote.bankingDetails.branchCode}
 • *Reference:* ${quote.bankingDetails.reference}
 
-─────────────────────
-📞 *Enquiries / WhatsApp:* ${quote.enquiriesPhone}
-✉️ *Email:* ${quote.enquiriesEmail}
-━━━━━━━━━━━━━━━━━━━━━`;
+*Enquiries / WhatsApp:* ${quote.enquiriesPhone}
+*Email:* ${quote.enquiriesEmail}
+────────────────────────────`;
 }
 
 /**
@@ -132,13 +126,13 @@ export function generateCleanPlainTextMessage(quote: Quotation): string {
   const itemsText = quote.items
     .map(
       (item, idx) =>
-        `${idx + 1}. ${item.description} (x${item.quantity}) — R ${item.total.toFixed(2)}`
+        `${idx + 1}. ${item.description} (x${item.quantity}) - R ${item.total.toFixed(2)}`
     )
     .join("\n");
 
   return `========================================
 VS PROCUREMENT / VALHALLA MOTORCYCLES
-${quote.corridor || "Pretoria to Midrand"}
+${quote.corridor || "Pretoria to Midrand Fleet Operations"}
 ========================================
 
 OFFICIAL QUOTATION: ${quote.id}

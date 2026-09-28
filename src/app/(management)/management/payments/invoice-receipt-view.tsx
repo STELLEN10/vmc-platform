@@ -162,7 +162,7 @@ export function InvoiceReceiptModal({
                 </p>
                 <div className="text-[11px] text-slate-500 mt-1 leading-snug">
                   <div>Reg: 2024/092812/07 · VAT No: 4920281923</div>
-                  <div>Pretoria & Midrand · South Africa</div>
+                  <div>Pretoria to Midrand · South Africa</div>
                   <div>
                     <a href={`mailto:${OFFICIAL_BANK_DETAILS.email}`} className="text-slate-700 hover:underline">
                       {OFFICIAL_BANK_DETAILS.email}

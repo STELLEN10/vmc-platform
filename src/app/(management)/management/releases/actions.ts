@@ -49,7 +49,7 @@ export type FeatureToggleScope = "driver" | "management";
 export async function toggleFeatureFlag(
   key: string,
   enabled: boolean,
-  requestedScope: FeatureToggleScope = "management"
+  targetScope?: FeatureToggleScope
 ) {
   const profile = await requireRole(ADMIN_ROLES);
 
@@ -60,7 +60,8 @@ export async function toggleFeatureFlag(
     return { success: false, error: "Core platform is required and cannot be disabled" };
   }
 
-  const scope: FeatureToggleScope = isDriverFeatureKey(key) ? "driver" : "management";
+  const scope: FeatureToggleScope =
+    targetScope || (isDriverFeatureKey(key) ? "driver" : "management");
 
   const admin = createAdminClient();
   const catalogItem = FEATURE_CATALOG[key as FeatureKey];

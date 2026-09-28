@@ -20,7 +20,7 @@ export default function ManagementLoginPage() {
             Dedicated operations access for authorized Valhalla Motorcycles management staff.
           </p>
         </div>
-        <p className="auth-brand-panel__note">VMC · Pretoria–Midrand · <a href="tel:+27766681879">+27 76 668 1879</a> · <a href="mailto:info@vsprocurement.co.za">info@vsprocurement.co.za</a></p>
+        <p className="auth-brand-panel__note">VMC · Pretoria to Midrand · <a href="tel:+27766681879">+27 76 668 1879</a> · <a href="mailto:info@vsprocurement.co.za">info@vsprocurement.co.za</a></p>
       </section>
 
       <section className="auth-form-panel">

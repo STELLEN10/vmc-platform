@@ -20,7 +20,7 @@ export default function DriverLoginPage() {
             Sign in to view your motorcycle, payments, service requests, and VMC notices.
           </p>
         </div>
-        <p className="driver-auth-page__footer">VMC · Pretoria–Midrand · <a href="tel:+27766681879">+27 76 668 1879</a> · <a href="mailto:info@vsprocurement.co.za">info@vsprocurement.co.za</a></p>
+        <p className="driver-auth-page__footer">VMC · Pretoria to Midrand · <a href="tel:+27766681879">+27 76 668 1879</a> · <a href="mailto:info@vsprocurement.co.za">info@vsprocurement.co.za</a></p>
       </section>
 
       <section className="driver-auth-page__form">

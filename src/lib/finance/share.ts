@@ -21,6 +21,7 @@ export interface ShareableDoc {
   totalAmount: number;
   notes?: string | null;
   paymentInstructions?: string | null;
+  corridor?: string | null;
 }
 
 export const OFFICIAL_BANK_DETAILS = {
@@ -41,42 +42,50 @@ Account Type: ${OFFICIAL_BANK_DETAILS.accountType}
 Branch Code: ${OFFICIAL_BANK_DETAILS.branchCode}`;
 
 /**
- * Builds clean WhatsApp text with rich formatting (bold, bullet points)
+ * Builds clean, professional WhatsApp text with reliable formatting,
+ * Pretoria to Midrand corridor, clear dividers, and zero corrupt characters.
  */
 export function buildWhatsAppMessage(doc: ShareableDoc): string {
   const isQuo = doc.type.toLowerCase().includes("quot");
   const docTitle = isQuo ? "OFFICIAL QUOTATION" : "TAX INVOICE";
+  const corridor = doc.corridor || "Pretoria to Midrand Fleet Operations";
 
-  const lines: string[] = [
+  const formattedItems = doc.items.map((it, idx) => {
+    const amount = Number(it.totalPrice ?? it.total ?? 0).toFixed(2);
+    return `${idx + 1}. *${it.description}* (x${it.quantity}) - *R ${amount}*`;
+  }).join("\n");
+
+  const lines: (string | null)[] = [
     `*VS PROCUREMENT / VALHALLA MOTORCYCLES*`,
-    `📄 *${docTitle}:* ${doc.docNumber}`,
-    `👤 *Client / Driver:* ${doc.recipientName}`,
-    doc.recipientPhone ? `📱 *Contact:* ${doc.recipientPhone}` : "",
-    doc.bikeReference ? `🏍️ *Motorcycle:* ${doc.bikeReference}` : "",
-    `📅 *Date Issued:* ${doc.issueDate}${doc.dueDate ? ` | *Due:* ${doc.dueDate}` : ""}`,
+    `*${corridor}*`,
+    `────────────────────────────`,
+    `*${docTitle}:* *${doc.docNumber}*`,
+    ``,
+    `*Client / Driver:* ${doc.recipientName}`,
+    doc.recipientPhone ? `*Contact:* ${doc.recipientPhone}` : null,
+    doc.bikeReference ? `*Motorcycle:* ${doc.bikeReference}` : null,
+    `*Date Issued:* ${doc.issueDate}${doc.dueDate ? ` | *Due:* ${doc.dueDate}` : ""}`,
     ``,
     `*SCHEDULE OF CHARGES / ITEMS:*`,
-    ...doc.items.map((it, idx) => {
-      const amount = Number(it.totalPrice ?? it.total ?? 0).toFixed(2);
-      return `${idx + 1}. ${it.description} (x${it.quantity}) — R ${amount}`;
-    }),
+    formattedItems,
     ``,
-    `💰 *TOTAL ${isQuo ? "QUOTED" : "DUE"}:* R ${Number(doc.totalAmount).toFixed(2)}`,
-    ``,
+    `*TOTAL ${isQuo ? "QUOTED" : "DUE"}:* *R ${Number(doc.totalAmount).toFixed(2)}*`,
+    `────────────────────────────`,
     `*OFFICIAL BANKING DETAILS (EFT):*`,
-    `🏦 *Bank Name:* ${OFFICIAL_BANK_DETAILS.bankName}`,
-    `🏷️ *Account Holder:* ${OFFICIAL_BANK_DETAILS.accountHolder}`,
-    `🔢 *Account No:* ${OFFICIAL_BANK_DETAILS.accountNumber}`,
-    `📋 *Account Type:* ${OFFICIAL_BANK_DETAILS.accountType}`,
-    `🏛️ *Branch Code:* ${OFFICIAL_BANK_DETAILS.branchCode}`,
-    `🔑 *Reference:* ${doc.docNumber}`,
+    `• *Bank Name:* ${OFFICIAL_BANK_DETAILS.bankName}`,
+    `• *Account Holder:* ${OFFICIAL_BANK_DETAILS.accountHolder}`,
+    `• *Account No:* ${OFFICIAL_BANK_DETAILS.accountNumber}`,
+    `• *Account Type:* ${OFFICIAL_BANK_DETAILS.accountType}`,
+    `• *Branch Code:* ${OFFICIAL_BANK_DETAILS.branchCode}`,
+    `• *Reference:* ${doc.docNumber}`,
     ``,
-    doc.notes ? `📝 *Notes:* ${doc.notes}\n` : "",
-    `📞 *Enquiries / WhatsApp:* ${OFFICIAL_BANK_DETAILS.phone}`,
-    `✉️ *Email:* ${OFFICIAL_BANK_DETAILS.email}`,
+    doc.notes ? `*Notes:* ${doc.notes}\n` : null,
+    `*Enquiries / WhatsApp:* ${OFFICIAL_BANK_DETAILS.phone}`,
+    `*Email:* ${OFFICIAL_BANK_DETAILS.email}`,
+    `────────────────────────────`,
   ];
 
-  return lines.filter((l) => l !== "").join("\n");
+  return lines.filter((l) => l !== null).join("\n");
 }
 
 /**

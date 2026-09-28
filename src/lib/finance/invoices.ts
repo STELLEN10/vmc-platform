@@ -58,6 +58,39 @@ const SETTINGS_KEY = "finance_invoices_and_quotations";
 // Initial seed data if no records exist yet
 const SEED_INVOICES: InvoiceOrQuotation[] = [
   {
+    id: "quo-seed-001",
+    docNumber: "QUO-2026-001",
+    type: "quotation",
+    driverId: "d0000000-0000-4000-8000-000000000002",
+    driverProfileId: "d0000000-0000-4000-8000-000000000002",
+    driverName: "Lameck",
+    driverEmail: "lameck@vmc.test",
+    driverPhone: "+27785206862",
+    bikeRegistration: "rsuC31ZJGP",
+    issueDate: "2026-09-28",
+    dueDate: "2026-10-05",
+    status: "sent",
+    items: [
+      {
+        id: "item-q001",
+        description: "Tyre Front",
+        partNumber: "H-TYR-001",
+        sku: "TYR-FRONT-01",
+        quantity: 1,
+        unitPrice: 436.58,
+        totalPrice: 436.58,
+      },
+    ],
+    subtotal: 436.58,
+    taxRate: 0,
+    taxAmount: 0,
+    totalAmount: 436.58,
+    notes: "Official replacement tyre quotation for delivery motorcycle. Payment confirms warehouse release and fitment slot.",
+    paymentInstructions: "Bank Name: Capitec | Account Holder: VS Procurement | Account No: 10976145 | Account Type: Business Account | Branch Code: 25854 | Ref: QUO-2026-001",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
     id: "inv-seed-001",
     docNumber: "INV-2026-001",
     type: "invoice",
@@ -152,7 +185,12 @@ export async function getInvoicesAndQuotations(): Promise<InvoiceOrQuotation[]> 
       .maybeSingle();
 
     if (!error && data?.value && Array.isArray(data.value)) {
-      return data.value as unknown as InvoiceOrQuotation[];
+      const records = data.value as unknown as InvoiceOrQuotation[];
+      const hasQuo001 = records.some((r) => r.docNumber === "QUO-2026-001");
+      if (!hasQuo001) {
+        return [SEED_INVOICES[0], ...records];
+      }
+      return records;
     }
 
     // Initialize with seed data if not present
