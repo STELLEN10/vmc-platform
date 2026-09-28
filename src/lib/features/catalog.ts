@@ -38,6 +38,7 @@ export const DRIVER_FEATURE_KEYS = new Set<FeatureKey>([
   "emergency_bike_support",
   "service_requests",
   "notification_system",
+  "payment_reminders",
   "driver_referrals",
   "new_onboarding",
   "ai_assistant",
