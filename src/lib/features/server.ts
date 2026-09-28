@@ -6,28 +6,12 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { type FeatureKey, isDriverFeatureKey } from "./catalog";
 
-type RuntimeEnvironment = "development" | "preview" | "production";
-
-function runtimeEnvironment(): RuntimeEnvironment {
-  const configured = process.env.VMC_FEATURE_ENVIRONMENT;
-  if (configured === "development" || configured === "preview" || configured === "production") {
-    return configured;
-  }
-  if (process.env.VERCEL_ENV === "preview") return "preview";
-  return process.env.NODE_ENV === "development" ? "development" : "production";
-}
-
 /**
- * Feature access is resolved from persistent Supabase data.
+ * Management access is independent from the Release Control driver switches.
  *
- * Management access uses feature_flags.enabled and is never affected by a
- * driver's scoped override. Driver access uses a small per-feature override
- * stored in the existing system_settings table, defaulting to the management
- * state when no driver override exists.
- *
- * This implementation intentionally avoids requiring a new database column so
- * the currently deployed VMC database remains compatible until the optional
- * driver_enabled migration is applied.
+ * For drivers, only features explicitly classified as driver-facing are
+ * considered. Their access defaults to ON until an explicit
+ * feature_driver_<key> override is saved in system_settings.
  */
 export async function hasFeatureAccess(feature: FeatureKey): Promise<boolean> {
   const userClient = await createClient();
@@ -47,93 +31,33 @@ export async function hasFeatureAccess(feature: FeatureKey): Promise<boolean> {
 
   if (profileError || !profile) return false;
 
+  // Management is always active. Driver switches must never remove
+  // management modules or block management routes.
+  if (profile.role !== "driver") return true;
+
+  // A driver can only access catalog entries intended for the driver app.
+  if (!isDriverFeatureKey(feature)) return false;
+
   const admin = createAdminClient();
-  const environment = runtimeEnvironment();
-
-  const { data: flag, error: flagError } = await admin
-    .from("feature_flags")
-    .select("id, key, enabled")
-    .eq("key", feature)
+  const settingKey = `feature_driver_${feature}`;
+  const { data: setting, error: settingError } = await admin
+    .from("system_settings")
+    .select("value")
+    .eq("key", settingKey)
     .maybeSingle();
 
-  if (flagError || !flag) return false;
-  if (feature === "core_platform") return true;
-
-  // A disabled management/global flag means nobody gets the feature.
-  if (!flag.enabled) return false;
-
-  // Respect the environment gate when one exists. If the row does not exist,
-  // preserve the previous VMC behavior and continue.
-  const { data: environmentRow, error: environmentError } = await admin
-    .from("feature_flag_environments")
-    .select("enabled")
-    .eq("feature_flag_id", flag.id)
-    .eq("environment", environment)
-    .maybeSingle();
-
-  if (environmentError) return false;
-  if (environmentRow && environmentRow.enabled === false) return false;
-
-  // A feature must belong to an active release when release mappings exist.
-  // Query the two tables separately because the generated Database types do not
-  // declare the release_features -> releases relationship.
-  const { data: releaseMappings, error: releaseError } = await admin
-    .from("release_features")
-    .select("release_id")
-    .eq("feature_flag_id", flag.id);
-
-  if (releaseError) return false;
-
-  if (releaseMappings && releaseMappings.length > 0) {
-    const releaseIds = releaseMappings.map((mapping) => mapping.release_id);
-    const { data: releases, error: releasesError } = await admin
-      .from("releases")
-      .select("id, status")
-      .in("id", releaseIds);
-
-    if (releasesError) return false;
-
-    const hasActiveRelease = (releases ?? []).some(
-      (release) => release.status === "active"
-    );
-    if (!hasActiveRelease) return false;
+  if (settingError) {
+    console.error(`Driver feature override lookup failed for ${feature}:`, settingError.message);
+    return false;
   }
 
-  // Beta assignments restrict the feature to designated profiles/roles.
-  const { data: assignments, error: assignmentError } = await admin
-    .from("feature_flag_assignments")
-    .select("profile_id, role")
-    .eq("feature_flag_id", flag.id);
-
-  if (assignmentError) return false;
-
-  if (assignments && assignments.length > 0) {
-    const allowed = assignments.some(
-      (assignment) =>
-        assignment.profile_id === user.id ||
-        assignment.role === profile.role
-    );
-    if (!allowed) return false;
+  const value = setting?.value;
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    const enabled = (value as { enabled?: unknown }).enabled;
+    if (typeof enabled === "boolean") return enabled;
   }
 
-  // Only the driver-facing subset uses the independent driver switch.
-  if (profile.role === "driver" && isDriverFeatureKey(feature)) {
-    const settingKey = `feature_driver_${feature}`;
-    const { data: setting, error: settingError } = await admin
-      .from("system_settings")
-      .select("value")
-      .eq("key", settingKey)
-      .maybeSingle();
-
-    if (settingError) return false;
-
-    const value = setting?.value;
-    if (value && typeof value === "object" && !Array.isArray(value)) {
-      const enabled = (value as { enabled?: unknown }).enabled;
-      if (typeof enabled === "boolean") return enabled;
-    }
-  }
-
+  // No driver override exists yet: keep the driver feature ON.
   return true;
 }
 

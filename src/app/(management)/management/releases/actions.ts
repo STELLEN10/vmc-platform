@@ -60,8 +60,7 @@ export async function toggleFeatureFlag(
     return { success: false, error: "Core platform is required and cannot be disabled" };
   }
 
-  const scope: FeatureToggleScope =
-    requestedScope === "driver" && isDriverFeatureKey(key) ? "driver" : "management";
+  const scope: FeatureToggleScope = isDriverFeatureKey(key) ? "driver" : "management";
 
   const admin = createAdminClient();
   const catalogItem = FEATURE_CATALOG[key as FeatureKey];
@@ -83,7 +82,8 @@ export async function toggleFeatureFlag(
       .from("feature_flags")
       .insert({
         key,
-        enabled,
+        // Driver-facing switches do not control the management/global flag.
+        enabled: scope === "driver" ? true : enabled,
         description: catalogItem?.description ?? null,
       })
       .select("id")
@@ -195,11 +195,11 @@ export async function toggleFeatureFlag(
     entity_id: flagId,
     old_values:
       scope === "driver"
-        ? { driver_override: "unknown" }
+        ? { driver_access: "previous persisted override or default ON" }
         : { enabled: existingFlag?.enabled ?? null },
     new_values:
       scope === "driver"
-        ? { driver_enabled: enabled, scope: "driver" }
+        ? { driver_access: enabled, scope: "driver" }
         : { enabled, scope: "management" },
     metadata: {
       source: "release_control",
@@ -217,11 +217,8 @@ export async function toggleFeatureFlag(
     success: true,
     enabled,
     scope,
-    managementEnabled: scope === "management" ? enabled : existingFlag?.enabled ?? true,
-    driverEnabled:
-      scope === "driver"
-        ? enabled
-        : existingFlag?.enabled ?? enabled,
+    managementEnabled: true,
+    driverEnabled: scope === "driver" ? enabled : true,
   };
 }
 

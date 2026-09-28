@@ -83,12 +83,14 @@ export function FeatureToggleBoard({
   assignments = [],
   isAdmin,
 }: FeatureToggleBoardProps) {
-  // Keep management access and driver access separate.
+  // Management stays active. Driver-facing features are controlled separately.
   const initialMap: Record<string, { management: boolean; driver: boolean }> = {};
   for (const flag of initialFlags) {
     initialMap[flag.key] = {
-      management: flag.enabled,
-      driver: flag.driverEnabled ?? flag.enabled,
+      management: true,
+      driver: isDriverFeatureKey(flag.key as FeatureKey)
+        ? (flag.driverEnabled ?? true)
+        : false,
     };
   }
   initialMap.core_platform = { management: true, driver: true };
@@ -113,8 +115,8 @@ export function FeatureToggleBoard({
     return isDriverFeatureKey(key) ? state.driver : state.management;
   };
 
-  const totalCount = allEntries.length;
-  const activeCount = allEntries.filter(([k]) => getVisibleState(k)).length;
+  const totalCount = allEntries.filter(([k]) => isDriverFeatureKey(k)).length;
+  const activeCount = allEntries.filter(([k]) => isDriverFeatureKey(k) && getVisibleState(k)).length;
   const disabledCount = totalCount - activeCount;
 
   // Filter features based on search, status tab, and version category
@@ -151,8 +153,16 @@ export function FeatureToggleBoard({
       return;
     }
 
-    const scope = isDriverFeatureKey(key) ? "driver" : "management";
-    const currentState = flagsState[key]?.[scope] ?? false;
+    if (!isDriverFeatureKey(key)) {
+      setFeedbackMessage({
+        type: "success",
+        text: FEATURE_CATALOG[key].name + " is management-only. Management access stays active.",
+      });
+      return;
+    }
+
+    const scope = "driver" as const;
+    const currentState = flagsState[key]?.driver ?? true;
     const nextState = !currentState;
 
     setFlagsState((prev) => ({
@@ -273,7 +283,7 @@ export function FeatureToggleBoard({
             Control Feature Access
           </h2>
           <p className="text-xs text-muted max-w-2xl m-0 leading-relaxed">
-            Driver-facing features have a Driver Access switch. Turning it OFF removes the feature from the driver app while management keeps its operational access. Management-only switches control management availability.
+            These switches control DRIVER ACCESS ONLY. Turning a driver-facing feature OFF removes it from the driver app and blocks the driver route. Management remains active.
           </p>
         </div>
 
@@ -287,7 +297,7 @@ export function FeatureToggleBoard({
                 activeSubTab === "toggles" ? "bg-white text-navy shadow-2xs font-bold" : "hover:text-navy"
               }`}
             >
-              Feature Switches ({activeCount}/{totalCount})
+              Driver Access ({activeCount}/{totalCount})
             </button>
             <button
               type="button"
@@ -379,7 +389,7 @@ export function FeatureToggleBoard({
                   onClick={() => {
                     const nonCoreKeys = allEntries
                       .map(([k]) => k)
-                      .filter((k) => k !== "core_platform");
+                      .filter((k) => k !== "core_platform" && isDriverFeatureKey(k));
                     handleBatchToggle(nonCoreKeys, false, "all non-core features");
                   }}
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-white hover:bg-rose-50 border border-slate-300 font-medium text-rose-700 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
@@ -467,9 +477,9 @@ export function FeatureToggleBoard({
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredFeatures.map(([key, item]) => {
               const isDriverScoped = isDriverFeatureKey(key);
-              const managementEnabled = flagsState[key]?.management ?? false;
-              const driverEnabled = flagsState[key]?.driver ?? false;
-              const isEnabled = isDriverScoped ? driverEnabled : managementEnabled;
+              const managementEnabled = true;
+              const driverEnabled = flagsState[key]?.driver ?? (isDriverScoped ? true : false);
+              const isEnabled = isDriverScoped ? driverEnabled : true;
               const isKeyPending = pendingKeys[key] || false;
               const isCore = key === "core_platform";
               const links = FEATURE_LINKS[key];
