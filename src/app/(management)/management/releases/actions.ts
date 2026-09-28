@@ -14,6 +14,8 @@ const releaseStatuses: ReleaseStatus[] = ["draft", "testing", "active", "paused"
 
 function revalidateAllFeaturePages() {
   revalidatePath("/management/releases");
+  revalidatePath("/management");
+  revalidatePath("/driver");
   revalidatePath("/driver/services");
   revalidatePath("/management/services");
   revalidatePath("/driver/emergency");
@@ -22,6 +24,14 @@ function revalidateAllFeaturePages() {
   revalidatePath("/management/maintenance");
   revalidatePath("/driver/inventory");
   revalidatePath("/management/inventory");
+  revalidatePath("/management/referrals");
+  revalidatePath("/driver/referrals");
+  revalidatePath("/management/ai");
+  revalidatePath("/driver/ai");
+  revalidatePath("/management/documents");
+  revalidatePath("/management/analytics");
+  revalidatePath("/management/activity");
+  revalidatePath("/driver/onboarding");
 }
 
 function releaseError(reason: "invalid" | "database" | "not-found") {
@@ -485,3 +495,129 @@ export async function assignBetaTester(formData: FormData) {
   if (error) releaseError("database");
   releaseSuccess();
 }
+
+export async function toggleFeatureFlag(key: string, enabled: boolean) {
+  await requireRole(ADMIN_ROLES);
+  if (!isFeatureKey(key)) {
+    return { success: false, error: "Invalid feature key" };
+  }
+  if (key === "core_platform" && !enabled) {
+    return { success: false, error: "Core platform cannot be disabled" };
+  }
+
+  const supabase = await createClient();
+  const catalogItem = FEATURE_CATALOG[key as FeatureKey];
+
+  // 1. Ensure or update feature_flags row
+  const { data: existingFlag } = await supabase
+    .from("feature_flags")
+    .select("id")
+    .eq("key", key)
+    .maybeSingle();
+
+  let flagId = existingFlag?.id;
+  if (!flagId) {
+    const { data: inserted, error: insertError } = await supabase
+      .from("feature_flags")
+      .insert({
+        key,
+        enabled,
+        description: catalogItem?.description || null,
+      })
+      .select("id")
+      .single();
+    if (!insertError && inserted) {
+      flagId = inserted.id;
+    }
+  } else {
+    await supabase
+      .from("feature_flags")
+      .update({ enabled })
+      .eq("id", flagId);
+  }
+
+  // 2. Call RPC set_feature_flag to keep triggers / release events updated
+  try {
+    await supabase.rpc("set_feature_flag", {
+      p_key: key,
+      p_enabled: enabled,
+      p_description: catalogItem?.description || null,
+    });
+  } catch {
+    // Keep going if RPC fails or table already updated
+  }
+
+  // 3. Keep all environments in sync
+  if (flagId) {
+    const envs = ["development", "preview", "production"] as const;
+    await supabase.from("feature_flag_environments").upsert(
+      envs.map((env) => ({
+        feature_flag_id: flagId,
+        environment: env,
+        enabled,
+      })),
+      { onConflict: "feature_flag_id,environment" }
+    );
+
+    // 4. If turning ON to test before official release:
+    // Link to release_features so database checks find it
+    if (catalogItem) {
+      const baseVersion = catalogItem.release.split("-")[0];
+      const targetVersion = catalogItem.release;
+
+      // Find or create the release
+      const { data: existingReleases } = await supabase
+        .from("releases")
+        .select("id, version, status");
+
+      let matchingRelease = (existingReleases ?? []).find(
+        (r) => r.version === targetVersion || r.version === baseVersion || r.version.startsWith(baseVersion)
+      );
+
+      // If no matching release exists yet, create one in 'testing' status for pre-release testing
+      if (!matchingRelease) {
+        const { data: newRel } = await supabase
+          .from("releases")
+          .insert({
+            version: targetVersion,
+            channel: targetVersion.includes("beta") ? "beta" : "stable",
+            status: "testing",
+            release_notes: `Pre-release testing for ${catalogItem.name}`,
+            activated_at: new Date().toISOString(),
+          })
+          .select("id, version, status")
+          .maybeSingle();
+
+        if (newRel) {
+          matchingRelease = newRel;
+        }
+      }
+
+      if (matchingRelease) {
+        await supabase.from("release_features").upsert(
+          {
+            release_id: matchingRelease.id,
+            feature_flag_id: flagId,
+          },
+          { onConflict: "release_id,feature_flag_id" }
+        );
+      }
+    }
+  }
+
+  revalidateAllFeaturePages();
+  return { success: true, enabled };
+}
+
+export async function bulkSetFeatureFlags(keys: string[], enabled: boolean) {
+  await requireRole(ADMIN_ROLES);
+  for (const key of keys) {
+    if (isFeatureKey(key)) {
+      if (key === "core_platform" && !enabled) continue;
+      await toggleFeatureFlag(key, enabled);
+    }
+  }
+  revalidateAllFeaturePages();
+  return { success: true };
+}
+
