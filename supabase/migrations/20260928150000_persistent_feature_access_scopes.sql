@@ -118,3 +118,153 @@ $$;
 
 revoke all on function public.set_feature_flag(text, boolean, text) from public;
 grant execute on function public.set_feature_flag(text, boolean, text) to authenticated;
+
+
+-- Scheduled payment reminders are driver-facing even though their dispatch
+-- control lives in VMC Management. Keep the management page/action available,
+-- but stop delivery when driver access for the reminder feature is OFF.
+create or replace function public.dispatch_payment_reminders()
+returns table (
+  processed_count integer,
+  upcoming_count integer,
+  due_count integer,
+  overdue_count integer
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  r record;
+  v_processed integer := 0;
+  v_upcoming integer := 0;
+  v_due integer := 0;
+  v_overdue integer := 0;
+  v_reminder_type text;
+  v_title text;
+  v_body text;
+  v_notif_id uuid;
+  v_driver_reminders_enabled boolean;
+begin
+  if not public.is_management() then
+    raise exception 'Only VMC management can dispatch payment reminders';
+  end if;
+
+  select exists (
+    select 1
+    from public.feature_flags f
+    join public.feature_flag_environments fe
+      on fe.feature_flag_id = f.id
+     and fe.environment = 'production'
+    join public.release_features rf
+      on rf.feature_flag_id = f.id
+    join public.releases rel
+      on rel.id = rf.release_id
+     and rel.status = 'active'
+    where f.key = 'payment_reminders'
+      and f.enabled
+      and f.driver_enabled
+      and fe.enabled
+  )
+  into v_driver_reminders_enabled;
+
+  if not coalesce(v_driver_reminders_enabled, false) then
+    return query select 0, 0, 0, 0;
+    return;
+  end if;
+
+  for r in
+    select
+      pp.id as period_id,
+      pp.contract_id,
+      pp.period_number,
+      pp.due_date,
+      pp.amount_due,
+      pp.status as payment_status,
+      c.driver_id,
+      d.profile_id,
+      p.full_name as driver_name,
+      b.registration as bike_registration
+    from public.payment_periods pp
+    join public.contracts c on c.id = pp.contract_id
+    join public.drivers d on d.id = c.driver_id
+    join public.profiles p on p.id = d.profile_id
+    left join public.bikes b on b.id = c.bike_id
+    where c.status = 'active'
+      and pp.status in ('due', 'overdue')
+      and pp.due_date <= (current_date + interval '3 days')
+  loop
+    if r.due_date < current_date then
+      v_reminder_type := 'payment_overdue';
+      v_title := 'Payment Overdue (Week ' || r.period_number || ')';
+      v_body := 'Your weekly payment of R' || r.amount_due || ' was due on ' || r.due_date || '. Please upload proof of payment immediately to keep your motorcycle active.';
+      v_overdue := v_overdue + 1;
+    elsif r.due_date = current_date then
+      v_reminder_type := 'payment_due_today';
+      v_title := 'Payment Due Today (Week ' || r.period_number || ')';
+      v_body := 'Your weekly rent-to-own payment of R' || r.amount_due || ' is due today (' || r.due_date || '). Please submit proof of payment.';
+      v_due := v_due + 1;
+    else
+      v_reminder_type := 'payment_upcoming';
+      v_title := 'Upcoming Payment (Week ' || r.period_number || ')';
+      v_body := 'Reminder: Weekly payment of R' || r.amount_due || ' is due on ' || r.due_date || '.';
+      v_upcoming := v_upcoming + 1;
+    end if;
+
+    if not exists (
+      select 1 from public.notifications
+      where recipient_profile_id = r.profile_id
+        and related_entity_id = r.period_id
+        and created_at >= (now() - interval '24 hours')
+    ) then
+      insert into public.notifications (
+        recipient_profile_id,
+        channel,
+        type,
+        title,
+        body,
+        status,
+        related_entity_type,
+        related_entity_id
+      ) values (
+        r.profile_id,
+        'in_app',
+        v_reminder_type,
+        v_title,
+        v_body,
+        'unread',
+        'payment_period',
+        r.period_id
+      ) returning id into v_notif_id;
+
+      insert into public.notification_deliveries (
+        notification_id,
+        channel,
+        status,
+        scheduled_for,
+        sent_at,
+        metadata
+      ) values (
+        v_notif_id,
+        'in_app',
+        'sent',
+        now(),
+        now(),
+        jsonb_build_object(
+          'contract_id', r.contract_id,
+          'period_number', r.period_number,
+          'due_date', r.due_date,
+          'amount_due', r.amount_due
+        )
+      );
+
+      v_processed := v_processed + 1;
+    end if;
+  end loop;
+
+  return query select v_processed, v_upcoming, v_due, v_overdue;
+end;
+$$;
+
+revoke all on function public.dispatch_payment_reminders() from public;
+grant execute on function public.dispatch_payment_reminders() to authenticated;
