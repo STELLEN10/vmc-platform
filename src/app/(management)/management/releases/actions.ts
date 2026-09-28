@@ -98,17 +98,24 @@ export async function toggleFeatureFlag(
 
     flagId = inserted.id;
   } else {
-    const update = scope === "driver"
-      ? { driver_enabled: enabled }
-      : { enabled };
+    const update = scope === "management"
+      ? { enabled }
+      : null;
 
     const { error: updateError } = await admin
       .from("feature_flags")
       .update(update)
       .eq("id", flagId);
 
-    if (updateError) {
-      return { success: false, error: `Could not save feature flag: ${updateError.message}` };
+    if (update) {
+      const { error: updateError } = await admin
+        .from("feature_flags")
+        .update(update)
+        .eq("id", flagId);
+
+      if (updateError) {
+        return { success: false, error: `Could not save feature flag: ${updateError.message}` };
+      }
     }
   }
 
@@ -199,7 +206,7 @@ export async function toggleFeatureFlag(
     entity_id: flagId,
     old_values:
       scope === "driver"
-        ? { driver_enabled: null }
+        ? { driver_override: true }
         : { enabled: existingFlag?.enabled ?? null },
     new_values:
       scope === "driver"
