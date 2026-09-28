@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireRole } from "@/lib/auth/authorization";
-import { ADMIN_ROLES } from "@/lib/auth/roles";
+import { MANAGEMENT_ROLES, ADMIN_ROLES } from "@/lib/auth/roles";
 import { FEATURE_CATALOG, type FeatureKey, isFeatureKey } from "@/lib/features/catalog";
+import { setFeatureFlagState, bulkSetFeatureFlagsState } from "@/lib/features/store";
 import { createClient } from "@/lib/supabase/server";
 
 function revalidateAllFeaturePages() {
