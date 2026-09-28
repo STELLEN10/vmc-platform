@@ -18,12 +18,13 @@ import {
   Plus,
   ShieldCheck,
 } from "lucide-react";
-import { FEATURE_CATALOG, type FeatureKey } from "@/lib/features/catalog";
+import { FEATURE_CATALOG, type FeatureKey, isDriverFeatureKey } from "@/lib/features/catalog";
 import { toggleFeatureFlag, bulkSetFeatureFlags, assignBetaTester, removeBetaTester } from "./actions";
 
 export type FlagData = {
   key: string;
   enabled: boolean;
+  driverEnabled: boolean;
   description?: string | null;
 };
 
@@ -53,7 +54,7 @@ const FEATURE_LINKS: Record<string, { label: string; managementHref?: string; dr
   parts_inventory: { label: "Parts Inventory", managementHref: "/management/inventory", driverHref: "/driver/inventory" },
   emergency_bike_support: { label: "Emergency Support", managementHref: "/management/emergency", driverHref: "/driver/emergency" },
   service_requests: { label: "Service Requests", managementHref: "/management/services", driverHref: "/driver/services" },
-  notification_system: { label: "Notifications", managementHref: "/management/notifications" },
+  notification_system: { label: "Notifications", managementHref: "/management/notifications", driverHref: "/driver/notifications" },
   payment_reminders: { label: "Reminders", managementHref: "/management/notifications" },
   operations_analytics: { label: "Analytics", managementHref: "/management/analytics" },
   management_documents: { label: "Documents", managementHref: "/management/documents" },
@@ -82,15 +83,18 @@ export function FeatureToggleBoard({
   assignments = [],
   isAdmin,
 }: FeatureToggleBoardProps) {
-  // Build lookup map from initial flags
-  const initialMap: Record<string, boolean> = {};
+  // Keep management access and driver access separate.
+  const initialMap: Record<string, { management: boolean; driver: boolean }> = {};
   for (const flag of initialFlags) {
-    initialMap[flag.key] = flag.enabled;
+    initialMap[flag.key] = {
+      management: flag.enabled,
+      driver: flag.driverEnabled ?? flag.enabled,
+    };
   }
-  // Core platform is always enabled
-  initialMap.core_platform = true;
+  initialMap.core_platform = { management: true, driver: true };
 
-  const [flagsState, setFlagsState] = useState<Record<string, boolean>>(initialMap);
+  const [flagsState, setFlagsState] =
+    useState<Record<string, { management: boolean; driver: boolean }>>(initialMap);
   const [pendingKeys, setPendingKeys] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [filterTab, setFilterTab] = useState<"all" | "active" | "disabled">("all");
@@ -104,13 +108,18 @@ export function FeatureToggleBoard({
 
   const allEntries = Object.entries(FEATURE_CATALOG) as [FeatureKey, { name: string; release: string; description: string }][];
 
+  const getVisibleState = (key: FeatureKey) => {
+    const state = flagsState[key] ?? { management: false, driver: false };
+    return isDriverFeatureKey(key) ? state.driver : state.management;
+  };
+
   const totalCount = allEntries.length;
-  const activeCount = allEntries.filter(([k]) => flagsState[k] === true).length;
+  const activeCount = allEntries.filter(([k]) => getVisibleState(k)).length;
   const disabledCount = totalCount - activeCount;
 
   // Filter features based on search, status tab, and version category
   const filteredFeatures = allEntries.filter(([key, item]) => {
-    const isEnabled = flagsState[key] ?? false;
+    const isEnabled = getVisibleState(key);
     const category = getFeatureCategory(item.release);
 
     if (filterTab === "active" && !isEnabled) return false;
@@ -142,20 +151,32 @@ export function FeatureToggleBoard({
       return;
     }
 
-    const currentState = flagsState[key] ?? false;
+    const scope = isDriverFeatureKey(key) ? "driver" : "management";
+    const currentState = flagsState[key]?.[scope] ?? false;
     const nextState = !currentState;
 
-    // Optimistic state update
-    setFlagsState((prev) => ({ ...prev, [key]: nextState }));
+    setFlagsState((prev) => ({
+      ...prev,
+      [key]: {
+        ...(prev[key] ?? { management: false, driver: false }),
+        [scope]: nextState,
+      },
+    }));
     setPendingKeys((prev) => ({ ...prev, [key]: true }));
     setFeedbackMessage(null);
 
     startTransition(async () => {
       try {
-        const result = await toggleFeatureFlag(key, nextState);
+        const result = await toggleFeatureFlag(key, nextState, scope);
         if (result && !result.success) {
           // Revert optimistic update
-          setFlagsState((prev) => ({ ...prev, [key]: currentState }));
+          setFlagsState((prev) => ({
+            ...prev,
+            [key]: {
+              ...(prev[key] ?? { management: false, driver: false }),
+              [scope]: currentState,
+            },
+          }));
           setFeedbackMessage({ type: "error", text: result.error || `Could not toggle ${FEATURE_CATALOG[key].name}` });
         } else {
           setFeedbackMessage({
@@ -166,7 +187,13 @@ export function FeatureToggleBoard({
           });
         }
       } catch (err: unknown) {
-        setFlagsState((prev) => ({ ...prev, [key]: currentState }));
+        setFlagsState((prev) => ({
+          ...prev,
+          [key]: {
+            ...(prev[key] ?? { management: false, driver: false }),
+            [scope]: currentState,
+          },
+        }));
         setFeedbackMessage({ type: "error", text: err instanceof Error ? err.message : "Failed to toggle feature." });
       } finally {
         setPendingKeys((prev) => ({ ...prev, [key]: false }));
@@ -177,12 +204,16 @@ export function FeatureToggleBoard({
   const handleBatchToggle = (keys: string[], targetState: boolean, label: string) => {
     if (!isAdmin) return;
     const previous = { ...flagsState };
-    const optimistic: Record<string, boolean> = { ...flagsState };
+    const optimistic: Record<string, { management: boolean; driver: boolean }> = { ...flagsState };
     const markPending: Record<string, boolean> = { ...pendingKeys };
 
     for (const k of keys) {
       if (k === "core_platform" && !targetState) continue;
-      optimistic[k] = targetState;
+      const scope = isDriverFeatureKey(k as FeatureKey) ? "driver" : "management";
+      optimistic[k] = {
+        ...(previous[k] ?? { management: false, driver: false }),
+        [scope]: targetState,
+      };
       markPending[k] = true;
     }
 
@@ -192,7 +223,8 @@ export function FeatureToggleBoard({
 
     startTransition(async () => {
       try {
-        await bulkSetFeatureFlags(keys, targetState);
+        const result = await bulkSetFeatureFlags(keys, targetState);
+        if (result && !result.success) throw new Error(result.error || "Batch feature update failed.");
         setFeedbackMessage({
           type: "success",
           text: `Successfully ${targetState ? "turned ON" : "turned OFF"} ${label}. Changes applied across entire app.`,
@@ -237,10 +269,10 @@ export function FeatureToggleBoard({
             </p>
           </div>
           <h2 className="text-xl font-extrabold text-navy mt-1 mb-1">
-            Turn features On or Off
+            Control Feature Access
           </h2>
           <p className="text-xs text-muted max-w-2xl m-0 leading-relaxed">
-            Flip any toggle switch to test features on your account before official release. When switched OFF, the feature is immediately canceled and hidden across the entire application for all users and drivers.
+            Driver-facing features have a Driver Access switch. Turning it OFF removes the feature from the driver app while management keeps its operational access. Management-only switches control management availability.
           </p>
         </div>
 
@@ -491,14 +523,14 @@ export function FeatureToggleBoard({
                   <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                     {/* Direct test navigation button if enabled */}
                     <div>
-                      {isEnabled && links?.managementHref ? (
+                      {managementEnabled && links?.managementHref ? (
                         <Link
                           href={links.managementHref}
                           className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 hover:underline"
                         >
                           Test Feature <ExternalLink className="w-3 h-3" />
                         </Link>
-                      ) : isEnabled && links?.driverHref ? (
+                      ) : driverEnabled && links?.driverHref ? (
                         <Link
                           href={links.driverHref}
                           className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 hover:text-rose-800 hover:underline"
