@@ -11,12 +11,17 @@ function cleanInlineMarkdown(text: string): string {
     .replaceAll("**", "")
     .replaceAll("__", "")
     .replaceAll("`", "")
+    .replace(/(^|\\s)\\*([^*\\n]+)\\*(?=\\s|$)/g, "$1$2")
     .replaceAll("*", "")
     .replace(/(^|\\s)_([^_\\n]+)_(?=\\s|$)/g, "$1$2")
     .trim();
 }
 
-function looksLikeTableRow(line: string): boolean {\n  return (line.match(/\\|/g) ?? []).length >= 2;\n}\n\nfunction isTableSeparator(line: string): boolean {
+function looksLikeTableRow(line: string): boolean {
+  return line.split("|").length >= 3;
+}
+
+function isTableSeparator(line: string): boolean {
   const cells = line.trim().replace(/^\\|/, "").replace(/\\|$/, "").split("|");
   return cells.length > 0 && cells.every((cell) => /^\\s*:?-{3,}:?\\s*$/.test(cell));
 }
@@ -168,7 +173,7 @@ export function AiAssistant({
             messages.map((message, index) => (
               <div key={index} className={`flex gap-2.5 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                 {message.role === "assistant" && <VmcAiMark className="mt-1 h-5 w-5 shrink-0" accent={role === "management" ? "#57b9ec" : "#ff6a70"} />}
-                <div className={`min-w-0 max-w-[94%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm leading-6 sm:max-w-[88%] ${message.role === "user" ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-800"}`}>
+                <div className={`min-w-0 max-w-[94%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm leading-6 ${message.role === "user" ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-800"}`}>
                   {message.role === "assistant" ? <AssistantMessage content={message.content} /> : message.content}
                 </div>
                 {message.role === "user" && <UserRound className="mt-1 h-4 w-4 shrink-0 text-neutral-400" />}
