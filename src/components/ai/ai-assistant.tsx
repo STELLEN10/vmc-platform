@@ -13,11 +13,10 @@ function cleanInlineMarkdown(text: string): string {
     .replaceAll("`", "")
     .replaceAll("*", "")
     .replace(/(^|\\s)_([^_\\n]+)_(?=\\s|$)/g, "$1$2")
-    .replace(/(^|\\s)_([^_\\n]+)_(?=\\s|$)/g, "$1$2")
     .trim();
 }
 
-function isTableSeparator(line: string): boolean {
+function looksLikeTableRow(line: string): boolean {\n  return (line.match(/\\|/g) ?? []).length >= 2;\n}\n\nfunction isTableSeparator(line: string): boolean {
   const cells = line.trim().replace(/^\\|/, "").replace(/\\|$/, "").split("|");
   return cells.length > 0 && cells.every((cell) => /^\\s*:?-{3,}:?\\s*$/.test(cell));
 }
@@ -36,11 +35,11 @@ function AssistantMessage({ content }: { content: string }) {
     const line = lines[i].trim();
     if (!line) { i += 1; continue; }
 
-    if (line.startsWith("|") && i + 1 < lines.length && isTableSeparator(lines[i + 1])) {
+    if (looksLikeTableRow(line) && i + 1 < lines.length && isTableSeparator(lines[i + 1])) {
       const headers = splitTableRow(line);
       const rows: string[][] = [];
       i += 2;
-      while (i < lines.length && lines[i].trim().startsWith("|")) {
+      while (i < lines.length && looksLikeTableRow(lines[i].trim())) {
         rows.push(splitTableRow(lines[i]));
         i += 1;
       }
