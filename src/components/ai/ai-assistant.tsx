@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Bot, Send, Sparkles, UserRound } from "lucide-react";
+import { Send, Sparkles, UserRound } from "lucide-react";
+import { VmcAiMark } from "@/components/ai/vmc-ai-mark";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -10,7 +11,8 @@ function cleanInlineMarkdown(text: string): string {
     .replaceAll("**", "")
     .replaceAll("__", "")
     .replaceAll("`", "")
-    .replace(/(^|\\s)\\*([^*\\n]+)\\*(?=\\s|$)/g, "$1$2")
+    .replaceAll("*", "")
+    .replace(/(^|\\s)_([^_\\n]+)_(?=\\s|$)/g, "$1$2")
     .replace(/(^|\\s)_([^_\\n]+)_(?=\\s|$)/g, "$1$2")
     .trim();
 }
@@ -43,14 +45,14 @@ function AssistantMessage({ content }: { content: string }) {
         i += 1;
       }
       blocks.push(
-        <div key={key++} className="my-3 overflow-x-auto rounded-xl border border-neutral-200 bg-white">
-          <table className="w-full border-collapse text-left text-xs">
-            <thead className="bg-neutral-50"><tr>
+        <div key={key++} className="my-3 overflow-hidden rounded-xl border border-neutral-200 bg-white">
+          <table className="w-full border-collapse text-left text-xs sm:text-sm">
+            <thead className="hidden bg-neutral-50 sm:table-header-group"><tr>
               {headers.map((header, index) => <th key={index} className="border-b border-neutral-200 px-3 py-2 font-bold text-neutral-700">{header}</th>)}
             </tr></thead>
-            <tbody>
-              {rows.map((row, rowIndex) => <tr key={rowIndex} className="border-b border-neutral-100 last:border-b-0">
-                {headers.map((_, columnIndex) => <td key={columnIndex} className="px-3 py-2 align-top text-neutral-700">{row[columnIndex] ?? "—"}</td>)}
+            <tbody className="block sm:table-row-group">
+              {rows.map((row, rowIndex) => <tr key={rowIndex} className="block border-b border-neutral-100 p-2 last:border-b-0 sm:table-row sm:p-0">
+                {headers.map((_, columnIndex) => <td key={columnIndex} data-label={headers[columnIndex]} className="block px-2 py-1.5 align-top text-neutral-700 before:mr-2 before:font-semibold before:text-neutral-500 before:content-[attr(data-label)] sm:table-cell sm:px-3 sm:py-2 sm:before:content-none">{row[columnIndex] ?? "—"}</td>)}
               </tr>)}
             </tbody>
           </table>
@@ -129,7 +131,7 @@ export function AiAssistant({
       <section className="panel panel--dark">
         <p className="eyebrow eyebrow--light">VMC AI</p>
         <div className="flex items-start gap-3">
-          <div className="rounded-xl bg-white/10 p-2.5"><Bot className="h-5 w-5" /></div>
+          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/10"><VmcAiMark className="h-7 w-7" accent={role === "management" ? "#57b9ec" : "#ff6a70"} /></div>
           <div>
             <h2 className="text-xl font-bold">Ask VMC AI</h2>
             <p className="mt-1 text-sm text-white/70">
@@ -138,14 +140,14 @@ export function AiAssistant({
           </div>
         </div>
 
-        <div className="mt-5 flex flex-wrap gap-2">
+        <div className="mt-5 flex flex-nowrap gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
           {suggestions.map((suggestion) => (
             <button
               key={suggestion}
               type="button"
               onClick={() => void sendMessage(suggestion)}
               disabled={isSending}
-              className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-xs font-semibold text-white hover:bg-white/15 disabled:opacity-50"
+              className="shrink-0 rounded-full border border-white/15 bg-white/10 px-3 py-2 text-xs font-semibold text-white hover:bg-white/15 disabled:opacity-50"
             >
               <Sparkles className="mr-1 inline h-3.5 w-3.5" />{suggestion}
             </button>
@@ -154,11 +156,11 @@ export function AiAssistant({
       </section>
 
       <section className="panel mt-4">
-        <div className="max-h-[55vh] min-h-56 space-y-3 overflow-y-auto">
+        <div className="min-h-72 max-h-[58dvh] space-y-3 overflow-y-auto pr-1 sm:min-h-56 sm:max-h-[55vh]">
           {messages.length === 0 ? (
             <div className="grid min-h-48 place-items-center text-center">
               <div>
-                <Bot className="mx-auto h-8 w-8 text-neutral-300" />
+                <VmcAiMark className="mx-auto h-10 w-10 text-neutral-300" accent="#db1e2a" />
                 <p className="mt-3 text-sm font-semibold text-ink">Your VMC AI conversation starts here.</p>
                 <p className="mt-1 text-xs text-muted">Try one of the prompts above.</p>
               </div>
@@ -166,8 +168,8 @@ export function AiAssistant({
           ) : (
             messages.map((message, index) => (
               <div key={index} className={`flex gap-2.5 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                {message.role === "assistant" && <Bot className="mt-1 h-4 w-4 shrink-0 text-red-600" />}
-                <div className={`max-w-[88%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm leading-6 ${message.role === "user" ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-800"}`}>
+                {message.role === "assistant" && <VmcAiMark className="mt-1 h-5 w-5 shrink-0" accent={role === "management" ? "#57b9ec" : "#ff6a70"} />}
+                <div className={`min-w-0 max-w-[94%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm leading-6 sm:max-w-[88%] ${message.role === "user" ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-800"}`}>
                   {message.role === "assistant" ? <AssistantMessage content={message.content} /> : message.content}
                 </div>
                 {message.role === "user" && <UserRound className="mt-1 h-4 w-4 shrink-0 text-neutral-400" />}
@@ -178,7 +180,7 @@ export function AiAssistant({
         </div>
 
         <form
-          className="mt-4 flex gap-2 border-t border-line pt-4"
+          className="sticky bottom-0 z-10 mt-4 flex gap-2 border-t border-line bg-paper/95 pt-4 backdrop-blur"
           onSubmit={(event) => {
             event.preventDefault();
             void sendMessage(input);
@@ -189,10 +191,10 @@ export function AiAssistant({
             onChange={(event) => setInput(event.target.value)}
             placeholder={role === "driver" ? "Ask about your bike, payments or parts…" : "Ask about the fleet, operations or inventory…"}
             maxLength={4000}
-            className="min-w-0 flex-1 rounded-xl border border-line bg-paper px-3.5 py-3 text-sm text-ink outline-none focus:ring-2 focus:ring-red-500"
+            className="min-w-0 flex-1 rounded-xl border border-line bg-paper px-3.5 py-3 text-[16px] text-ink sm:text-sm outline-none focus:ring-2 focus:ring-red-500"
             aria-label="Message VMC AI"
           />
-          <button type="submit" disabled={!input.trim() || isSending} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl bg-neutral-900 text-white disabled:opacity-50">
+          <button type="submit" disabled={!input.trim() || isSending} className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl bg-neutral-900 text-white disabled:opacity-50">
             <Send className="h-4 w-4" />
           </button>
         </form>
