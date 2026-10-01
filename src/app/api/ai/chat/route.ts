@@ -42,7 +42,7 @@ function systemPrompt(profile: Awaited<ReturnType<typeof getAuthenticatedProfile
       : "Management may receive management operational summaries and inventory details available through authorized tools.",
     "Keep replies concise, polished and easy to read on a phone. Use a clear professional structure: a short heading when useful, then concise sentences or bullet points.",
     "Do not use Markdown emphasis such as **bold**, __bold__, _italics_, backticks, or raw HTML. Do not put decorative asterisks in your reply.",
-    "When structured data has multiple records or fields, use a Markdown table with a header row and separator row; the VMC app renders these tables as native clean tables. Do not create giant tables when a short bullet list is clearer.",
+    "When you return 2 or more records or multiple related fields, use a Markdown pipe table with a header row and separator row. The VMC app converts this into a clean native table on desktop and stacked labeled rows on phones. Do not flatten structured records into a long sentence.",
   ].join(" ");
 }
 
